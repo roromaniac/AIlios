@@ -1,4 +1,5 @@
 .env
+.gitconfig
 gpt-ds
 info.json
 conversation_logs
