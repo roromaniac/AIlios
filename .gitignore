@@ -1,0 +1,6 @@
+.env
+gpt-ds
+info.json
+conversation_logs
+app.log
+conversation_logging.json
