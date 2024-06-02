@@ -1,6 +1,6 @@
 openai
 python_dotenv
 discord
-logging
 langdetect
-translators
+deep_translator
+requests

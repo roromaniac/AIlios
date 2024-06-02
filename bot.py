@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import asyncio
 import logging
 from langdetect import detect
-import translators as ts
+from deep_translator import GoogleTranslator
 load_dotenv()
 
 COMMAND_NAME = "/randohelp"
@@ -49,9 +49,6 @@ def check_rate_limit(endpoint):
     else:
         logging.error(f"Failed to check rate limit: {response.status_code}")
         return None, None
-
-# one token = 4 chars -> round down to 3.5 chars for safety margin
-# we use 8k token context so 8192 * 3.5 -> 0.9 * that for the warning limit
 
 # Discord helper functions
 # print(f"Message sent by: {message.author.name}")
@@ -103,7 +100,7 @@ async def on_message(discord_message):
                     discord_thread = discord_message.channel
                     conversations_logs[discord_thread.id].append(current_message)
                     header = f'Trying to generate a helpful response...'
-                    header = ts.translate_text(header, to_language=text_language, translate='google')
+                    header = GoogleTranslator(source='auto', target=text_language).translate(header)
                     await discord_thread.send(header)
                     await discord_thread.send(f'====================================================================')
                 else:
@@ -118,7 +115,7 @@ async def on_message(discord_message):
                     discord_thread_name = f"Discussion: {response.choices[0].message.content}"
                     discord_thread = await discord_message.create_thread(name=discord_thread_name)
                     intro = f'Hey, {discord_message.author.display_name}! I will try to help you with your inquiry. Friendly reminder that I am just a bot and my responses are not guaranteed to work. Please consult #help for a higher guarantee of resolution should my response not help.'
-                    intro = ts.translate_text(intro, to_language=text_language, translate='google')
+                    intro = GoogleTranslator(source='auto', target=text_language).translate(intro)
                     separator = f'===================================================================='
                     # initialize conversation log with original help message and original response
                     conversations_logs[discord_thread.id] = [current_message, {"role": "assistant", "content": f"{intro} + \n + {separator}"}]
@@ -188,13 +185,14 @@ async def on_message(discord_message):
 
         except Exception as e:
 
-            # Check if the channel of the message is an instance of discord.Thread
-            is_thread = isinstance(discord_message.channel, discord.Thread)
-            if is_thread:
-                discord_thread = discord_message.channel
-            else:
-                discord_thread_name = f"FATAL ERROR OCCURRED"
-                discord_thread = await discord_message.create_thread(name=discord_thread_name)
+            if discord_thread is None:
+                # Check if the channel of the message is an instance of discord.Thread
+                is_thread = isinstance(discord_message.channel, discord.Thread) or isinstance(discord_thread, discord.Thread)
+                if is_thread:
+                    discord_thread = discord_message.channel
+                else:
+                    discord_thread_name = f"FATAL ERROR OCCURRED"
+                    discord_thread = await discord_message.create_thread(name=discord_thread_name)
 
             await discord_thread.send('The Ailios bot could not process the response. Please try again. If it continues to fail, please ping @roromaniac informing him of the incident.')
             # Log the exception
