@@ -78,6 +78,7 @@ async def on_message(discord_message):
 
         try:
             
+            discord_thread = None
             remaining, reset = check_rate_limit("channels/1238177913212502087/messages")
             print(remaining, reset)
             text = discord_message.content[(len(COMMAND_NAME)):]
@@ -107,7 +108,7 @@ async def on_message(discord_message):
                 else:
                     # Create a thread linked to the message if not already in a thread
                     response = client.chat.completions.create(
-                                    model="gpt-3.5-turbo",
+                                    model="gpt-4o",
                                     messages=[
                                         {"role": "system", "content": "You are a summarizer that adequately summarizes a help inquiry in 8 words or less in order to create good thread titles."},
                                         {"role": "user", "content": f"Please create a thread title based on the following inquiry: {text}"}
@@ -120,7 +121,7 @@ async def on_message(discord_message):
                     separator = f'===================================================================='
                     # initialize conversation log with original help message and original response
                     conversations_logs[discord_thread.id] = {
-                        "message_author": discord_message.author, 
+                        "message_author": discord_message.author.name, 
                         "message_log": [current_message, {"role": "assistant", "content": f"{intro} + \n + {separator}"}]
                     }
                     await discord_thread.send(intro)
@@ -189,6 +190,59 @@ async def on_message(discord_message):
 
         except Exception as e:
 
+            ERROR_MESSAGE = 'The Ailios bot could not process the response. Please try again. If it continues to fail, please ping @roromaniac informing him of the incident.'
+            text = discord_message.content[(len(COMMAND_NAME)):]
+            if discord_thread is None:
+                # Check if the channel of the message is an instance of discord.Thread
+                is_thread = isinstance(discord_message.channel, discord.Thread) or isinstance(discord_thread, discord.Thread)
+                if is_thread:
+                    discord_thread = discord_message.channel
+                else:
+                    discord_thread_name = f"FATAL ERROR OCCURRED"
+                    discord_thread = await discord_message.create_thread(name=discord_thread_name)
+                    current_message = {"role": "user", "content": f"{text}"}
+                    conversations_logs[discord_thread.id] = {
+                        "message_author": discord_message.author.name, 
+                        "message_log": [current_message]
+                    }
+            try:
+                text_language = detect(conversations_logs[discord_thread.id]["message_log"][0]["content"])
+                translated_error_message = GoogleTranslator(source='auto', target=text_language).translate(ERROR_MESSAGE)
+            except Exception as e_translate:
+                translated_error_message = ERROR_MESSAGE
+                logging.exception("ERROR OCCURRED")
+            conversations_logs[discord_thread.id]["message_log"].append({"role": "assistant", "content": translated_error_message})
+            await discord_thread.send(translated_error_message)
+            # Log the exception
+            logging.exception("ERROR OCCURRED")
+
+            
+    elif discord_message.content.startswith(REVIEW_NAME):
+
+        REVIEW_SUCCESS_MESSAGE = "Thanks for reviewing AI-lios! Your review will help us focus on creating better responses in the future."
+        REVIEW_FAILURE_MESSAGE = "To leave a review for AI-lios, please ONLY provide a value between 1 (indicating inappropriate/inaccurate response) and 10 (perfect response)."
+
+        try:
+
+            text = discord_message.content[(len(REVIEW_NAME)):]
+            # Check if the channel of the message is an instance of discord.Thread
+            is_thread = isinstance(discord_message.channel, discord.Thread)
+            if is_thread:
+                discord_thread = discord_message.channel
+                text_language = detect(conversations_logs[discord_thread.id]["message_log"][0]["content"])
+                if discord_message.author.name == conversations_logs[discord_thread.id]["message_author"]:
+                    try:
+                        user_rating = float(text)
+                        if user_rating >= 1 and user_rating <= 10:
+                            conversations_logs[discord_thread.id]["rating"] = user_rating
+                            await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_SUCCESS_MESSAGE))
+                        else:
+                            await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_FAILURE_MESSAGE))
+                    except ValueError:
+                        await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_FAILURE_MESSAGE))
+
+        except Exception as e:
+
             if discord_thread is None:
                 # Check if the channel of the message is an instance of discord.Thread
                 is_thread = isinstance(discord_message.channel, discord.Thread) or isinstance(discord_thread, discord.Thread)
@@ -200,24 +254,7 @@ async def on_message(discord_message):
 
             await discord_thread.send('The Ailios bot could not process the response. Please try again. If it continues to fail, please ping @roromaniac informing him of the incident.')
             # Log the exception
-            logging.exception("An error occurred!")
-
-            
-    elif discord_message.content.startswith(REVIEW_NAME):
-        text = discord_message.content[(len(REVIEW_NAME)):]
-        # Check if the channel of the message is an instance of discord.Thread
-        is_thread = isinstance(discord_message.channel, discord.Thread)
-        if is_thread:
-            discord_thread = discord_message.channel
-            text_language = detect(conversations_logs[discord_thread.id]["message_log"][0]["content"])
-            if discord_message.author == conversations_logs[discord_thread.id]["message_author"]:
-                try:
-                    user_rating = float(text)
-                    if user_rating >= 1 and user_rating <= 10:
-                        conversations_logs[discord_thread.id]["rating"] = user_rating
-                        await discord_thread.send("Thanks for reviewing AI-lios! Your review will help us focus on creating better responses in the future.")
-                except ValueError:
-                    await discord_thread.send("To leave a review for AI-lios, please provide a value between 1 (indicating inappropriate/inaccurate response) and 10 (perfect response).")
+            logging.exception("ERROR OCCURRED")
 
 
 client.run(os.getenv("DISCORD_TOKEN"))
