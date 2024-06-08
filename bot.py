@@ -127,7 +127,7 @@ async def on_message(discord_message):
                     await discord_thread.send(separator)
                 
                 openai_thread = client.beta.threads.create(
-                    messages = conversations_logs[discord_thread.id]
+                    messages = conversations_logs[discord_thread.id]["message_log"]
                 )
 
                 openai_message = client.beta.threads.messages.create(
@@ -166,7 +166,7 @@ async def on_message(discord_message):
                 # Add footnotes to the end of the message before displaying to user
                 
                 # Log conversation with knowledge files cited.
-                conversations_logs[discord_thread.id].append({"role": "assistant", "content": message_content.value + '\n' + '\n'.join(citations)})
+                conversations_logs[discord_thread.id]["message_log"].append({"role": "assistant", "content": message_content.value + '\n' + '\n'.join(citations)})
 
                 for index, annotation in enumerate(annotations):
                     # Remove source citation text
@@ -213,11 +213,12 @@ async def on_message(discord_message):
             if discord_message.author == conversations_logs[discord_thread.id]["message_author"]:
                 try:
                     user_rating = float(text)
+                    if user_rating >= 1 and user_rating <= 10:
+                        conversations_logs[discord_thread.id]["rating"] = user_rating
+                        await discord_thread.send("Thanks for reviewing AI-lios! Your review will help us focus on creating better responses in the future.")
                 except ValueError:
                     await discord_thread.send("To leave a review for AI-lios, please provide a value between 1 (indicating inappropriate/inaccurate response) and 10 (perfect response).")
-                if user_rating >= 1 and user_rating <= 10:
-                    conversations_logs[discord_thread.id]["rating"] = user_rating
-                    await discord_thread.send("Thanks for reviewing AI-lios! Your review will help us focus on creating better responses in the future.")
+
 
 client.run(os.getenv("DISCORD_TOKEN"))
 
