@@ -12,6 +12,7 @@ from deep_translator import GoogleTranslator
 load_dotenv()
 
 COMMAND_NAME = "/randohelp"
+REVIEW_NAME = "/review"
 CONVERSATION_FILE = "conversation_logging.json"
 
 model = 'asst_CVyBlCLuW65qRZ3MnVlTMjv6'
@@ -98,7 +99,7 @@ async def on_message(discord_message):
                 is_thread = isinstance(discord_message.channel, discord.Thread)
                 if is_thread:
                     discord_thread = discord_message.channel
-                    conversations_logs[discord_thread.id].append(current_message)
+                    conversations_logs[discord_thread.id]["message_log"].append(current_message)
                     header = f'Trying to generate a helpful response...'
                     header = GoogleTranslator(source='auto', target=text_language).translate(header)
                     await discord_thread.send(header)
@@ -106,7 +107,7 @@ async def on_message(discord_message):
                 else:
                     # Create a thread linked to the message if not already in a thread
                     response = client.chat.completions.create(
-                                    model="gpt-4o",
+                                    model="gpt-3.5-turbo",
                                     messages=[
                                         {"role": "system", "content": "You are a summarizer that adequately summarizes a help inquiry in 8 words or less in order to create good thread titles."},
                                         {"role": "user", "content": f"Please create a thread title based on the following inquiry: {text}"}
@@ -118,7 +119,10 @@ async def on_message(discord_message):
                     intro = GoogleTranslator(source='auto', target=text_language).translate(intro)
                     separator = f'===================================================================='
                     # initialize conversation log with original help message and original response
-                    conversations_logs[discord_thread.id] = [current_message, {"role": "assistant", "content": f"{intro} + \n + {separator}"}]
+                    conversations_logs[discord_thread.id] = {
+                        "message_author": discord_message.author, 
+                        "message_log": [current_message, {"role": "assistant", "content": f"{intro} + \n + {separator}"}]
+                    }
                     await discord_thread.send(intro)
                     await discord_thread.send(separator)
                 
@@ -199,8 +203,21 @@ async def on_message(discord_message):
             logging.exception("An error occurred!")
 
             
-    # elif message.content.startswith('/new'):
-    #     await new_conversation(default_channel, False)    
+    elif discord_message.content.startswith(REVIEW_NAME):
+        text = discord_message.content[(len(REVIEW_NAME)):]
+        # Check if the channel of the message is an instance of discord.Thread
+        is_thread = isinstance(discord_message.channel, discord.Thread)
+        if is_thread:
+            discord_thread = discord_message.channel
+            text_language = detect(conversations_logs[discord_thread.id]["message_log"][0]["content"])
+            if discord_message.author == conversations_logs[discord_thread.id]["message_author"]:
+                try:
+                    user_rating = float(text)
+                except ValueError:
+                    await discord_thread.send("To leave a review for AI-lios, please provide a value between 1 (indicating inappropriate/inaccurate response) and 10 (perfect response).")
+                if user_rating >= 1 and user_rating <= 10:
+                    conversations_logs[discord_thread.id]["rating"] = user_rating
+                    await discord_thread.send("Thanks for reviewing AI-lios! Your review will help us focus on creating better responses in the future.")
 
 client.run(os.getenv("DISCORD_TOKEN"))
 
