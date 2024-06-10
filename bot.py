@@ -11,15 +11,19 @@ from langdetect import detect
 from deep_translator import GoogleTranslator
 load_dotenv()
 
-COMMAND_NAME = "/randohelp"
-REVIEW_NAME = "/review"
-CONVERSATION_FILE = "conversation_logging.json"
 
-model = 'asst_CVyBlCLuW65qRZ3MnVlTMjv6'
+CHANNEL_NAME = "ailios"
+COMMAND_NAME = "/randohelp"
+CONVERSATION_FILE = "conversation_logging.json"
+LOGGING_FILE = "app.log"
+REVIEW_NAME = "/review"
+STORAGE_SPACE = 10.0 # in GiB
+
 intents = discord.Intents.all()
-client = discord.Client(intents=intents)
+discord_client = discord.Client(intents=intents)
 permissions = discord.Permissions(8)
 
+model = 'asst_CVyBlCLuW65qRZ3MnVlTMjv6'
 openai.organization = os.getenv("ORG")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -60,12 +64,12 @@ def check_rate_limit(endpoint):
 # print(f"Message sent at: {message.created_at}")
 # print(f"Is this a DM?: {isinstance(message.channel, discord.DMChannel)}")
 
-@client.event
+@discord_client.event
 async def on_ready():
-    print(f'Logged in as {client.user}')
+    print(f'Logged in as {discord_client.user}')
 
 
-@client.event
+@discord_client.event
 async def on_message(discord_message):
     global total_ctx_string_len
     global context_file
@@ -79,9 +83,16 @@ async def on_message(discord_message):
         try:
             
             discord_thread = None
+            if ((os.path.getsize(LOGGING_FILE) + os.path.getsize(LOGGING_FILE)) / (1024 * 1024 * 1024)) > (0.8 * STORAGE_SPACE):
+                # DM Roro that we are low on storage.
+                user_id = 611722032198975511
+                user = await discord_client.fetch_user(user_id)
+                # Send the direct message
+                if user:
+                    await user.send("Less than 20% of storage space remains!!!!! Back up logs and conversations.")
             remaining, reset = check_rate_limit("channels/1238177913212502087/messages")
             print(remaining, reset)
-            text = discord_message.content[(len(COMMAND_NAME)):]
+            text = discord_message.content[(len(COMMAND_NAME) + 1):]
             text_language = detect(text)
             if len(text) <= 2000:
                 # if total_ctx_string_len < 26200: # -> 26200
@@ -94,7 +105,7 @@ async def on_message(discord_message):
                 
                 current_message = {"role": "user", "content": f"{text}"}
 
-                client = OpenAI()
+                openai_client = OpenAI()
 
                 # Check if the channel of the message is an instance of discord.Thread
                 is_thread = isinstance(discord_message.channel, discord.Thread)
@@ -107,7 +118,7 @@ async def on_message(discord_message):
                     await discord_thread.send(f'====================================================================')
                 else:
                     # Create a thread linked to the message if not already in a thread
-                    response = client.chat.completions.create(
+                    response = openai_client.chat.completions.create(
                                     model="gpt-4o",
                                     messages=[
                                         {"role": "system", "content": "You are a summarizer that adequately summarizes a help inquiry in 8 words or less in order to create good thread titles."},
@@ -127,23 +138,23 @@ async def on_message(discord_message):
                     await discord_thread.send(intro)
                     await discord_thread.send(separator)
                 
-                openai_thread = client.beta.threads.create(
+                openai_thread = openai_client.beta.threads.create(
                     messages = conversations_logs[discord_thread.id]["message_log"]
                 )
 
-                openai_message = client.beta.threads.messages.create(
+                openai_message = openai_client.beta.threads.messages.create(
                     thread_id=openai_thread.id,
                     role="user",
                     content=text
                 )
 
-                run = client.beta.threads.runs.create_and_poll(
+                run = openai_client.beta.threads.runs.create_and_poll(
                     thread_id=openai_thread.id,
                     assistant_id="asst_CVyBlCLuW65qRZ3MnVlTMjv6",
                 )
 
                 if run.status == 'completed': 
-                    openai_message = client.beta.threads.messages.list(
+                    openai_message = openai_client.beta.threads.messages.list(
                         thread_id=openai_thread.id
                     )
                 else:
@@ -159,10 +170,10 @@ async def on_message(discord_message):
                     message_content.value = message_content.value.replace(annotation.text, f' [{index}]')
                     # Gather citations based on annotation attributes
                     if (file_citation := getattr(annotation, 'file_citation', None)):
-                        cited_file = client.files.retrieve(file_citation.file_id)
+                        cited_file = openai_client.files.retrieve(file_citation.file_id)
                         citations.append(f'[{index}] {file_citation.quote} from {cited_file.filename}')
                     elif (file_path := getattr(annotation, 'file_path', None)):
-                        cited_file = client.files.retrieve(file_path.file_id)
+                        cited_file = openai_client.files.retrieve(file_path.file_id)
                         citations.append(f'[{index}] Click <here> to download {cited_file.filename}')
                 # Add footnotes to the end of the message before displaying to user
                 
@@ -190,8 +201,8 @@ async def on_message(discord_message):
 
         except Exception as e:
 
-            ERROR_MESSAGE = 'The Ailios bot could not process the response. Please try again. If it continues to fail, please ping @roromaniac informing him of the incident.'
-            text = discord_message.content[(len(COMMAND_NAME)):]
+            ERROR_MESSAGE = f'The Ailios bot could not process the response. Please try again. If it continues to fail, please ping <@611722032198975511> informing him of the incident.'
+            text = discord_message.content[(len(COMMAND_NAME) + 1):]
             if discord_thread is None:
                 # Check if the channel of the message is an instance of discord.Thread
                 is_thread = isinstance(discord_message.channel, discord.Thread) or isinstance(discord_thread, discord.Thread)
@@ -224,7 +235,7 @@ async def on_message(discord_message):
 
         try:
 
-            text = discord_message.content[(len(REVIEW_NAME)):]
+            text = discord_message.content[(len(REVIEW_NAME) + 1):]
             # Check if the channel of the message is an instance of discord.Thread
             is_thread = isinstance(discord_message.channel, discord.Thread)
             if is_thread:
@@ -243,6 +254,7 @@ async def on_message(discord_message):
 
         except Exception as e:
 
+            ERROR_MESSAGE = f'The Ailios bot could not process the response. Please try again. If it continues to fail, please ping <@611722032198975511> informing him of the incident.'
             if discord_thread is None:
                 # Check if the channel of the message is an instance of discord.Thread
                 is_thread = isinstance(discord_message.channel, discord.Thread) or isinstance(discord_thread, discord.Thread)
@@ -252,12 +264,12 @@ async def on_message(discord_message):
                     discord_thread_name = f"FATAL ERROR OCCURRED"
                     discord_thread = await discord_message.create_thread(name=discord_thread_name)
 
-            await discord_thread.send('The Ailios bot could not process the response. Please try again. If it continues to fail, please ping @roromaniac informing him of the incident.')
+            await discord_thread.send(ERROR_MESSAGE)
             # Log the exception
             logging.exception("ERROR OCCURRED")
 
 
-client.run(os.getenv("DISCORD_TOKEN"))
+discord_client.run(os.getenv("DISCORD_TOKEN"))
 
 # async def new_conversation(default_channel, length_reached):
 #     global convo_log_count
