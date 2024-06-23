@@ -1,0 +1,16 @@
+CHANNEL_NAME = "ailios"
+COMMAND_NAME = "/randohelp"
+CONVERSATION_FILE = "conversation_logging.json"
+DEFAULT_LANGUAGE = "en"
+IMAGE_EXTENSIONS = ['.jpg','.png','.jpeg']
+LOGGING_FILE = "app.log"
+LANG_DETECT_MIN_PROB = 0.6
+MIN_WORDS_IN_MESSAGE_FOR_TRANSLATION = 5
+MODEL = "gpt-4o"
+OPENAI_ASSISTANT = 'asst_CVyBlCLuW65qRZ3MnVlTMjv6'
+REVIEW_FAILURE_MESSAGE = "To leave a review for AI-lios, please ONLY provide a value between 1 (indicating inappropriate/inaccurate response) and 10 (perfect response)."
+REVIEW_NAME = "/review"
+REVIEW_SUCCESS_MESSAGE = "Thanks for reviewing AI-lios! Your review will help us focus on creating better responses in the future."
+STORAGE_SPACE = 10.0 # in GiB
+THREAD_TITLE_SYSTEM_PROMPT = "You are a summarizer that adequately summarizes a help inquiry in 8 words or less in order to create good thread titles."
+THREAD_TITLE_USER_PROMPT = "Please create a thread title based on the following inquiry:"
