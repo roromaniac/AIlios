@@ -45,11 +45,11 @@ async def on_message(discord_message):
             is_thread = isinstance(discord_message.channel, discord.Thread)
 
             # storage sanity check
-            storage_check(discord_client)
+            await storage_check(discord_client)
 
             # handle rate limits
             remaining, reset = check_rate_limit("channels/1238177913212502087/messages")
-            rate_limit_met = handle_rate_limit(discord_message, remaining, reset, is_thread)
+            rate_limit_met = await handle_rate_limit(discord_message, float(remaining), float(reset), is_thread)
             if rate_limit_met:
                 return
 
@@ -124,7 +124,7 @@ async def on_message(discord_message):
                 run = openai_client.beta.threads.runs.create_and_poll(
                     thread_id=openai_thread.id,
                     assistant_id=OPENAI_ASSISTANT,
-                    max_completion_tokens=400,
+                    max_completion_tokens=MAX_COMPLETION_TOKENS,
                 )
 
                 # extract assistant response if run successfully completed
@@ -134,6 +134,8 @@ async def on_message(discord_message):
                         thread_id=openai_thread.id
                     )
                 else:
+                    print(run.incomplete_details)
+                    print(run.last_error)
                     raise RuntimeError("The OpenAI message failed to generate.")
 
                 # extract the message content
@@ -150,13 +152,16 @@ async def on_message(discord_message):
 
                 response = message_content.value
 
-                if len(response) > 2000:
-                    await discord_thread.send(TOO_LONG_OPENAI_RESPONSE_ERROR_MESSAGE)
-                    return
+                num_messages_needed = (len(response) // MAX_CHARS_DISCORD) + 1
+                for i in range(num_messages_needed):
+                    if num_messages_needed == 1:
+                        await discord_thread.send(response)
+                    else:
+                        await discord_thread.send(response[(MAX_CHARS_DISCORD*i):(MAX_CHARS_DISCORD*(i+1))])
 
-                await discord_thread.send(response)
                 
-                with open(CONVERSATION_FILE, 'w') as logs:
+                
+                with open(CONVERSATION_FILE, 'w', encoding='utf-8') as logs:
                     json.dump(conversations_logs, logs, indent=4)
 
             else:

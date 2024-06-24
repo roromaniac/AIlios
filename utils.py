@@ -1,19 +1,14 @@
 import os
 import json
 import logging
-import asyncio
 import io
 
-import discord
 import requests
 import aiohttp
 import tempfile
 from dotenv import load_dotenv
 from langdetect import detect_langs
 from deep_translator import GoogleTranslator
-
-import openai
-from openai import OpenAI
 
 from config import *
 
@@ -79,12 +74,11 @@ async def storage_check(discord_client):
             await user.send("Less than 20% of storage space remains!!!!! Back up logs and conversations.")
 
 async def handle_rate_limit(discord_message, remaining, reset, is_thread):
-    remaining = 0
     if remaining <= 1:
         if not is_thread:
-            discord_thread_name = f"Rate Limit Warning"
+            discord_thread_name = "Rate Limit Warning"
             discord_thread = await discord_message.create_thread(name=discord_thread_name)
-        await discord_thread.send(f"You have have been rate limited. Please try again in {round(float(reset), 2)} seconds.")
+        await discord_thread.send(f"You have have been rate limited. Please try again in {round(reset, 2)} seconds.")
         return True
     return False
 
@@ -117,7 +111,7 @@ async def discord_to_openai_image_conversion(discord_message, openai_client):
 
 def setup_conversation_logs():
     if os.path.exists(CONVERSATION_FILE):
-        with open(CONVERSATION_FILE, "r") as logs:
+        with open(CONVERSATION_FILE, "r", encoding='utf-8') as logs:
             try:
                 conversations_logs = json.load(logs)
                 conversations_logs = {int(k): v for k, v in conversations_logs.items()}
@@ -125,6 +119,6 @@ def setup_conversation_logs():
                 conversations_logs = {}
     else:
         conversations_logs = {}
-        with open(CONVERSATION_FILE, "w") as logs:
+        with open(CONVERSATION_FILE, "w", encoding='utf-8') as logs:
             json.dump(conversations_logs, logs)
     return conversations_logs
