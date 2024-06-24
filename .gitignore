@@ -1,4 +1,5 @@
 .env
+.pylintrc
 gpt-ds
 info.json
 conversation_logs

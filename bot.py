@@ -1,3 +1,5 @@
+# pylint: disable=wildcard-import, unused-wildcard-import
+
 import os
 import json
 import logging
@@ -22,21 +24,31 @@ permissions = discord.Permissions(8)
 openai.organization = os.getenv("ORG")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-logging.basicConfig(filename='app.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    filename='app.log',
+    level=logging.ERROR,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 conversations_logs = setup_conversation_logs()
 
 @discord_client.event
 async def on_ready():
+    """
+        Tasks to perform upon bot server startup.
+    """
+
     print(f'Logged in as {discord_client.user}')
 
 
 @discord_client.event
 async def on_message(discord_message):
-    
+    """
+        Tasks to perform when the discord server receives a message.
+    """
     await asyncio.sleep(.1)
 
-    if discord_message.content.startswith(COMMAND_NAME):
+    if discord_message.content.startswith(HELP_COMMAND):
 
         try:
 
@@ -54,12 +66,12 @@ async def on_message(discord_message):
                 return
 
             # remove command from query
-            text = discord_message.content[(len(COMMAND_NAME) + 1):]
+            text = discord_message.content[(len(HELP_COMMAND) + 1):]
 
             text_language = detect_message_language(text)
 
             if len(text) <= 2000:
-    
+
                 current_message = {"role": "user", "content": f"{text}"}
                 openai_client = OpenAI()
 
@@ -152,15 +164,18 @@ async def on_message(discord_message):
 
                 response = message_content.value
 
+                # send response to discord using several messages if need be
                 num_messages_needed = (len(response) // MAX_CHARS_DISCORD) + 1
+                start_index = 0
                 for i in range(num_messages_needed):
                     if num_messages_needed == 1:
                         await discord_thread.send(response)
                     else:
-                        await discord_thread.send(f"[{i}/{num_messages_needed}]" + response[(MAX_CHARS_DISCORD*i):(MAX_CHARS_DISCORD*(i+1))])
+                        message_count_header = f"**[{i+1}/{num_messages_needed}]** "
+                        end_index = start_index + MAX_CHARS_DISCORD - len(message_count_header)
+                        await discord_thread.send(message_count_header + response[start_index:end_index])
+                        start_index = end_index
 
-                
-                
                 with open(CONVERSATION_FILE, 'w', encoding='utf-8') as logs:
                     json.dump(conversations_logs, logs, indent=4)
 
@@ -170,7 +185,7 @@ async def on_message(discord_message):
 
         except Exception:
 
-            text = discord_message.content[(len(COMMAND_NAME) + 1):]
+            text = discord_message.content[(len(HELP_COMMAND) + 1):]
             if discord_thread is None:
                 is_thread = isinstance(discord_message.channel, discord.Thread) or isinstance(discord_thread, discord.Thread)
                 if is_thread:
@@ -193,12 +208,12 @@ async def on_message(discord_message):
             await discord_thread.send(translated_error_message)
             logging.exception("ERROR OCCURRED")
 
-            
-    elif discord_message.content.startswith(REVIEW_NAME):
+
+    elif discord_message.content.startswith(REVIEW_COMMAND):
 
         try:
-
-            text = discord_message.content[(len(REVIEW_NAME) + 1):]
+            # store the review or send an error message that review can't be done
+            text = discord_message.content[(len(REVIEW_COMMAND) + 1):]
             is_thread = isinstance(discord_message.channel, discord.Thread)
             if is_thread:
                 discord_thread = discord_message.channel
@@ -207,7 +222,7 @@ async def on_message(discord_message):
                 if discord_message.author.name == conversations_logs[discord_thread.id]["message_author"]:
                     try:
                         user_rating = float(text)
-                        if user_rating >= 1 and user_rating <= 10:
+                        if 1 <= user_rating <= 10:
                             conversations_logs[discord_thread.id]["rating"] = user_rating
                             await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_SUCCESS_MESSAGE))
                         else:
@@ -216,7 +231,7 @@ async def on_message(discord_message):
                         await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_FAILURE_MESSAGE))
 
         except Exception:
-
+            # communicate to user that there is a fatal error
             if discord_thread is None:
                 is_thread = isinstance(discord_message.channel, discord.Thread) or isinstance(discord_thread, discord.Thread)
                 if is_thread:
