@@ -157,7 +157,7 @@ async def on_message(discord_message):
                     if num_messages_needed == 1:
                         await discord_thread.send(response)
                     else:
-                        await discord_thread.send(response[(MAX_CHARS_DISCORD*i):(MAX_CHARS_DISCORD*(i+1))])
+                        await discord_thread.send(f"[{i}/{num_messages_needed}]" + response[(MAX_CHARS_DISCORD*i):(MAX_CHARS_DISCORD*(i+1))])
 
                 
                 
