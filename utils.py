@@ -114,3 +114,17 @@ async def discord_to_openai_image_conversion(discord_message, openai_client):
             "image_file": {"file_id": file_response.id}
         })
     return image_files
+
+def setup_conversation_logs():
+    if os.path.exists(CONVERSATION_FILE):
+        with open(CONVERSATION_FILE, "r") as logs:
+            try:
+                conversations_logs = json.load(logs)
+                conversations_logs = {int(k): v for k, v in conversations_logs.items()}
+            except json.decoder.JSONDecodeError:
+                conversations_logs = {}
+    else:
+        conversations_logs = {}
+        with open(CONVERSATION_FILE, "w") as logs:
+            json.dump(conversations_logs, logs)
+    return conversations_logs

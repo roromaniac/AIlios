@@ -2,14 +2,9 @@ import os
 import json
 import logging
 import asyncio
-import io
 
 import discord
-import requests
-import aiohttp
-import tempfile
 from dotenv import load_dotenv
-from langdetect import detect_langs
 from deep_translator import GoogleTranslator
 
 import openai
@@ -29,17 +24,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 logging.basicConfig(filename='app.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
-if os.path.exists(CONVERSATION_FILE):
-    with open(CONVERSATION_FILE, "r") as logs:
-        try:
-            conversations_logs = json.load(logs)
-            conversations_logs = {int(k): v for k, v in conversations_logs.items()}
-        except json.decoder.JSONDecodeError:
-            conversations_logs = {}
-else:
-    conversations_logs = {}
-    with open(CONVERSATION_FILE, "w") as logs:
-        json.dump(conversations_logs, logs)
+conversations_logs = setup_conversation_logs()
 
 @discord_client.event
 async def on_ready():
@@ -48,10 +33,6 @@ async def on_ready():
 
 @discord_client.event
 async def on_message(discord_message):
-    global total_ctx_string_len
-    global context_file
-    global context
-    global convo_log_count
     
     await asyncio.sleep(.1)
 
@@ -71,15 +52,14 @@ async def on_message(discord_message):
             rate_limit_met = handle_rate_limit(discord_message, remaining, reset, is_thread)
             if rate_limit_met:
                 return
-            
+
             # remove command from query
             text = discord_message.content[(len(COMMAND_NAME) + 1):]
-            
-            # detect message language
+
             text_language = detect_message_language(text)
 
             if len(text) <= 2000:
-                
+    
                 current_message = {"role": "user", "content": f"{text}"}
                 openai_client = OpenAI()
 
@@ -87,10 +67,10 @@ async def on_message(discord_message):
                 if is_thread:
                     discord_thread = discord_message.channel
                     conversations_logs[discord_thread.id]["message_log"].append(current_message)
-                    header = f'Trying to generate a helpful response...'
+                    header = EXISTING_THREAD_HEADER
                     header = GoogleTranslator(source='auto', target=text_language).translate(header)
                     await discord_thread.send(header)
-                    await discord_thread.send(f'====================================================================')
+                    await discord_thread.send(SEPARATOR)
                 else:
                     # create a thread linked to the message if not already in a thread
                     response = openai_client.chat.completions.create(
@@ -100,21 +80,20 @@ async def on_message(discord_message):
                                         {"role": "user", "content": f"{THREAD_TITLE_USER_PROMPT}: {text}"}
                                     ]
                                 )
-                    discord_thread_name = f"Discussion: {response.choices[0].message.content}"
+                    discord_thread_name = f"{THREAD_CATEGORY}: {response.choices[0].message.content}"
                     discord_thread = await discord_message.create_thread(name=discord_thread_name)
-                    intro = f'Hey, {discord_message.author.display_name}! I will try to help you with your inquiry. Friendly reminder that I am just a bot and my responses are not guaranteed to work. Please consult #help for a higher guarantee of resolution should my response not help.'
+                    intro = f'Hey, {discord_message.author.display_name}! {NEW_THREAD_HEADER}'
                     intro = GoogleTranslator(source='auto', target=text_language).translate(intro)
-                    separator = f'===================================================================='
                     # initialize conversation log with original help message and original response
                     conversations_logs[discord_thread.id] = {
                         "message_author": discord_message.author.name, 
-                        "message_content_summary": discord_thread_name.removeprefix("Discussion: "),
+                        "message_content_summary": discord_thread_name.removeprefix(f"{THREAD_CATEGORY}: "),
                         "message_language": text_language,
-                        "message_log": [current_message, {"role": "assistant", "content": f"{intro} + \n + {separator}"}]
+                        "message_log": [current_message, {"role": "assistant", "content": f"{intro}"}]
                     }
                     await discord_thread.send(intro)
-                    await discord_thread.send(separator)
-                
+                    await discord_thread.send(SEPARATOR)
+
                 # establish existing conversation thread for context
                 openai_thread = openai_client.beta.threads.create(
                     messages = conversations_logs[discord_thread.id]["message_log"]
@@ -132,7 +111,7 @@ async def on_message(discord_message):
                         role="user",
                         content=text_content + image_content
                     )
-                
+
                 else:
                     # establish new message for assistant
                     user_inquiry = openai_client.beta.threads.messages.create(
@@ -145,54 +124,54 @@ async def on_message(discord_message):
                 run = openai_client.beta.threads.runs.create_and_poll(
                     thread_id=openai_thread.id,
                     assistant_id=OPENAI_ASSISTANT,
+                    max_completion_tokens=400,
                 )
 
                 # extract assistant response if run successfully completed
-                # this response is the only added message to the tread so openai_message only stores one message
-                if run.status == 'completed': 
+                # this response is the only added message to the thread so openai_message only stores one message
+                if run.status == 'completed':
                     openai_message = openai_client.beta.threads.messages.list(
                         thread_id=openai_thread.id
                     )
                 else:
                     raise RuntimeError("The OpenAI message failed to generate.")
-                
+
                 # extract the message content
                 message_content = openai_message.data[0].content[0].text
                 # handle citations
-                annotations, citations = extract_citations(message_content)
-                
+                annotations, citations = extract_citations(openai_client, message_content)
+
                 # log conversation with knowledge files cited.
                 conversations_logs[discord_thread.id]["message_log"].append({"role": "assistant", "content": message_content.value + '\n' + '\n'.join(citations)})
 
-                for index, annotation in enumerate(annotations):
-                    # Remove source citation text
-                    message_content.value = message_content.value.replace(f' [{index}]', f'')
+                for index, _ in enumerate(annotations):
+                    # remove source citation text
+                    message_content.value = message_content.value.replace(f' [{index}]', '')
 
                 response = message_content.value
 
                 if len(response) > 2000:
-                    await discord_thread.send("Discord can't process message longer than 2000 chars. Try to ask a simpler question so that the character limit is not exceeded.")
-                    
+                    await discord_thread.send(TOO_LONG_OPENAI_RESPONSE_ERROR_MESSAGE)
+                    return
+
                 await discord_thread.send(response)
-                                
+                
                 with open(CONVERSATION_FILE, 'w') as logs:
                     json.dump(conversations_logs, logs, indent=4)
 
             else:
 
-                await discord_thread.send('Too long, please send shorter messages.')
+                await discord_thread.send(TOO_LONG_DISCORD_MESSAGE_ERROR_MESSAGE)
 
-        except Exception as e:
+        except Exception:
 
-            ERROR_MESSAGE = f'The Ailios bot could not process the response. Please try again. I have pinged <@611722032198975511> informing him of the incident.'
             text = discord_message.content[(len(COMMAND_NAME) + 1):]
             if discord_thread is None:
-                # Check if the channel of the message is an instance of discord.Thread
                 is_thread = isinstance(discord_message.channel, discord.Thread) or isinstance(discord_thread, discord.Thread)
                 if is_thread:
                     discord_thread = discord_message.channel
                 else:
-                    discord_thread_name = f"FATAL ERROR OCCURRED"
+                    discord_thread_name = THREAD_TITLE_ERROR_MESSAGE
                     discord_thread = await discord_message.create_thread(name=discord_thread_name)
                     current_message = {"role": "user", "content": f"{text}"}
                     conversations_logs[discord_thread.id] = {
@@ -201,13 +180,12 @@ async def on_message(discord_message):
                     }
             try:
                 text_language = detect_message_language(text)
-                translated_error_message = GoogleTranslator(source='auto', target=text_language).translate(ERROR_MESSAGE)
-            except Exception as e_translate:
-                translated_error_message = ERROR_MESSAGE
+                translated_error_message = GoogleTranslator(source='auto', target=text_language).translate(BOT_ERROR_MESSAGE)
+            except Exception:
+                translated_error_message = BOT_ERROR_MESSAGE
                 logging.exception("ERROR OCCURRED")
             conversations_logs[discord_thread.id]["message_log"].append({"role": "assistant", "content": translated_error_message})
             await discord_thread.send(translated_error_message)
-            # Log the exception
             logging.exception("ERROR OCCURRED")
 
             
@@ -216,7 +194,6 @@ async def on_message(discord_message):
         try:
 
             text = discord_message.content[(len(REVIEW_NAME) + 1):]
-            # Check if the channel of the message is an instance of discord.Thread
             is_thread = isinstance(discord_message.channel, discord.Thread)
             if is_thread:
                 discord_thread = discord_message.channel
@@ -233,20 +210,17 @@ async def on_message(discord_message):
                     except ValueError:
                         await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_FAILURE_MESSAGE))
 
-        except Exception as e:
+        except Exception:
 
-            ERROR_MESSAGE = f'The Ailios bot could not process the response. Please try again. I have pinged <@611722032198975511> informing him of the incident.'
             if discord_thread is None:
-                # check if the channel of the message is an instance of discord.Thread
                 is_thread = isinstance(discord_message.channel, discord.Thread) or isinstance(discord_thread, discord.Thread)
                 if is_thread:
                     discord_thread = discord_message.channel
                 else:
-                    discord_thread_name = f"FATAL ERROR OCCURRED"
+                    discord_thread_name = THREAD_TITLE_ERROR_MESSAGE
                     discord_thread = await discord_message.create_thread(name=discord_thread_name)
 
-            await discord_thread.send(ERROR_MESSAGE)
-            # log the exception
+            await discord_thread.send(BOT_ERROR_MESSAGE)
             logging.exception("ERROR OCCURRED")
 
 discord_client.run(os.getenv("DISCORD_TOKEN"))
