@@ -1,3 +1,5 @@
+"""Configuration variables for bot."""
+
 BOT_ERROR_MESSAGE = 'The Ailios bot could not process the response. Please try again. I have pinged <@611722032198975511> informing him of the incident.'
 CHANNEL_NAME = "ailios"
 CONVERSATION_FILE = "conversation_logging.json"
@@ -15,7 +17,7 @@ MODEL = "gpt-4o"
 NEW_THREAD_HEADER = "I will try to help you with your inquiry. Friendly reminder that I am just a bot and my responses are not guaranteed to work. Please consult #help for a higher guarantee of resolution should my response not help."
 OPENAI_ASSISTANT = 'asst_CVyBlCLuW65qRZ3MnVlTMjv6'
 REVIEW_COMMAND = "/review"
-REVIEW_FAILURE_MESSAGE = "To leave a review for AI-lios, please ONLY provide a value between 1 (indicating inappropriate/inaccurate response) and 10 (perfect response)."
+REVIEW_FAILURE_MESSAGE = "To leave a review for AI-lios, please ensure you are the help message author and ONLY provide a value between 1 (indicating inappropriate/inaccurate response) and 10 (perfect response)."
 REVIEW_SUCCESS_MESSAGE = "Thanks for reviewing AI-lios! Your review will help us focus on creating better responses in the future."
 SEPARATOR = '===================================================================='
 STORAGE_SPACE = 10.0 # in GiB

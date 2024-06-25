@@ -1,3 +1,5 @@
+"""Utility functions bot."""
+
 # pylint: disable=wildcard-import, unused-wildcard-import
 
 import os
@@ -141,6 +143,8 @@ async def handle_rate_limit(discord_message, remaining, reset, is_thread):
         if not is_thread:
             discord_thread_name = "Rate Limit Warning"
             discord_thread = await discord_message.create_thread(name=discord_thread_name)
+        else:
+            discord_thread = discord_message.channel
         await discord_thread.send(f"You have have been rate limited. Please try again in {round(reset, 2)} seconds.")
         return True
     return False

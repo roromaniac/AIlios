@@ -1,4 +1,6 @@
-# pylint: disable=wildcard-import, unused-wildcard-import
+"""Script for bot behavior on startup and on message."""
+
+# pylint: disable=wildcard-import, unused-wildcard-import,, broad-exception-caught
 
 import os
 import json
@@ -118,15 +120,16 @@ async def on_message(discord_message):
                         "text": text
                     }]
                     image_content = discord_to_openai_image_conversion(discord_message, openai_client)
-                    user_inquiry = openai_client.beta.threads.messages.create(
+                    # add current user message to the thread
+                    _ = openai_client.beta.threads.messages.create(
                         thread_id=openai_thread.id,
                         role="user",
                         content=text_content + image_content
                     )
 
                 else:
-                    # establish new message for assistant
-                    user_inquiry = openai_client.beta.threads.messages.create(
+                    # add current user message to the thread
+                    _ = openai_client.beta.threads.messages.create(
                         thread_id=openai_thread.id,
                         role="user",
                         content=text
@@ -219,16 +222,15 @@ async def on_message(discord_message):
                 discord_thread = discord_message.channel
                 first_thread_message = conversations_logs[discord_thread.id]["message_log"][0]["content"]
                 text_language = detect_message_language(first_thread_message)
-                if discord_message.author.name == conversations_logs[discord_thread.id]["message_author"]:
-                    try:
-                        user_rating = float(text)
-                        if 1 <= user_rating <= 10:
-                            conversations_logs[discord_thread.id]["rating"] = user_rating
-                            await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_SUCCESS_MESSAGE))
-                        else:
-                            await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_FAILURE_MESSAGE))
-                    except ValueError:
+                try:
+                    user_rating = float(text)
+                    if (1 <= user_rating <= 10) and (discord_message.author.name == conversations_logs[discord_thread.id]["message_author"]):
+                        conversations_logs[discord_thread.id]["rating"] = user_rating
+                        await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_SUCCESS_MESSAGE))
+                    else:
                         await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_FAILURE_MESSAGE))
+                except ValueError:
+                    await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_FAILURE_MESSAGE))
 
         except Exception:
             # communicate to user that there is a fatal error
