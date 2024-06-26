@@ -1,6 +1,6 @@
 """Script for bot behavior on startup and on message."""
 
-# pylint: disable=wildcard-import, unused-wildcard-import,, broad-exception-caught
+# pylint: disable=wildcard-import, unused-wildcard-import, broad-exception-caught
 
 import os
 import json
@@ -9,7 +9,6 @@ import asyncio
 
 import discord
 from dotenv import load_dotenv
-from deep_translator import GoogleTranslator
 
 import openai
 from openai import OpenAI
@@ -32,14 +31,11 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-conversations_logs = setup_conversation_logs()
-
 @discord_client.event
 async def on_ready():
     """
         Tasks to perform upon bot server startup.
     """
-
     print(f'Logged in as {discord_client.user}')
 
 
@@ -50,90 +46,49 @@ async def on_message(discord_message):
     """
     await asyncio.sleep(.1)
 
+    conversations_logs = setup_conversation_logs()
+
     if discord_message.content.startswith(HELP_COMMAND):
 
         try:
 
-            # identify if message is part of thread
             discord_thread = None
-            is_thread = isinstance(discord_message.channel, discord.Thread)
 
-            # storage sanity check
+            # check if memory is getting close to server limit
             await storage_check(discord_client)
 
             # handle rate limits
             remaining, reset = check_rate_limit("channels/1238177913212502087/messages")
-            rate_limit_met = await handle_rate_limit(discord_message, float(remaining), float(reset), is_thread)
+            rate_limit_met = await handle_rate_limit(discord_message, float(remaining), float(reset), is_discord_thread(discord_message, discord_thread))
             if rate_limit_met:
                 return
 
             # remove command from query
-            text = discord_message.content[(len(HELP_COMMAND) + 1):]
+            text = discord_message.content.removeprefix(HELP_COMMAND + " ")
 
             text_language = detect_message_language(text)
 
-            if len(text) <= 2000:
+            if len(text) <= MAX_CHARS_DISCORD:
 
                 current_message = {"role": "user", "content": f"{text}"}
                 openai_client = OpenAI()
 
-                # check if the channel of the message is an instance of discord.Thread
-                if is_thread:
-                    discord_thread = discord_message.channel
-                    conversations_logs[discord_thread.id]["message_log"].append(current_message)
-                    header = EXISTING_THREAD_HEADER
-                    header = GoogleTranslator(source='auto', target=text_language).translate(header)
-                    await discord_thread.send(header)
-                    await discord_thread.send(SEPARATOR)
-                else:
-                    # create a thread linked to the message if not already in a thread
-                    response = openai_client.chat.completions.create(
-                                    model=MODEL,
-                                    messages=[
-                                        {"role": "system", "content": THREAD_TITLE_SYSTEM_PROMPT},
-                                        {"role": "user", "content": f"{THREAD_TITLE_USER_PROMPT}: {text}"}
-                                    ]
-                                )
-                    discord_thread_name = f"{THREAD_CATEGORY}: {response.choices[0].message.content}"
-                    discord_thread = await discord_message.create_thread(name=discord_thread_name)
-                    intro = f'Hey, {discord_message.author.display_name}! {NEW_THREAD_HEADER}'
-                    intro = GoogleTranslator(source='auto', target=text_language).translate(intro)
-                    # initialize conversation log with original help message and original response
-                    conversations_logs[discord_thread.id] = {
-                        "message_author": discord_message.author.name, 
-                        "message_content_summary": discord_thread_name.removeprefix(f"{THREAD_CATEGORY}: "),
-                        "message_language": text_language,
-                        "message_log": [current_message, {"role": "assistant", "content": f"{intro}"}]
-                    }
-                    await discord_thread.send(intro)
-                    await discord_thread.send(SEPARATOR)
+                discord_thread, existing_thread = await get_discord_thread(openai_client, discord_message, message_content=text)
+                initial_message = await send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language)
+                conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, current_message, initial_message, existing_thread)
 
                 # establish existing conversation thread for context
                 openai_thread = openai_client.beta.threads.create(
                     messages = conversations_logs[discord_thread.id]["message_log"]
                 )
 
-                if len(discord_message.attachments) > 0:
-                    # establish new message for assistant
-                    text_content = [{
-                        "type": "text",
-                        "text": text
-                    }]
-                    image_content = discord_to_openai_image_conversion(discord_message, openai_client)
-                    # add current user message to the thread
-                    _ = openai_client.beta.threads.messages.create(
-                        thread_id=openai_thread.id,
-                        role="user",
-                        content=text_content + image_content
-                    )
-
-                else:
-                    # add current user message to the thread
-                    _ = openai_client.beta.threads.messages.create(
-                        thread_id=openai_thread.id,
-                        role="user",
-                        content=text
-                    )
+                # create text and image content to send to assistant
+                text_content, image_content = await populate_openai_assistant_content(openai_client, discord_message, text)
+                _ = openai_client.beta.threads.messages.create(
+                    thread_id=openai_thread.id,
+                    role="user",
+                    content=text_content + image_content
+                )
 
                 # attempt to extract response
                 run = openai_client.beta.threads.runs.create_and_poll(
@@ -144,14 +99,7 @@ async def on_message(discord_message):
 
                 # extract assistant response if run successfully completed
                 # this response is the only added message to the thread so openai_message only stores one message
-                if run.status == 'completed':
-                    openai_message = openai_client.beta.threads.messages.list(
-                        thread_id=openai_thread.id
-                    )
-                else:
-                    print(run.incomplete_details)
-                    print(run.last_error)
-                    raise RuntimeError("The OpenAI message failed to generate.")
+                openai_message = await get_assistant_response(openai_client, openai_thread, run, discord_thread)
 
                 # extract the message content
                 message_content = openai_message.data[0].content[0].text
@@ -159,28 +107,14 @@ async def on_message(discord_message):
                 annotations, citations = extract_citations(openai_client, message_content)
 
                 # log conversation with knowledge files cited.
-                conversations_logs[discord_thread.id]["message_log"].append({"role": "assistant", "content": message_content.value + '\n' + '\n'.join(citations)})
+                conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, current_message, message_content.value + '\n' + '\n'.join(citations), existing_thread)
 
                 for index, _ in enumerate(annotations):
                     # remove source citation text
                     message_content.value = message_content.value.replace(f' [{index}]', '')
 
-                response = message_content.value
-
                 # send response to discord using several messages if need be
-                num_messages_needed = (len(response) // MAX_CHARS_DISCORD) + 1
-                start_index = 0
-                for i in range(num_messages_needed):
-                    if num_messages_needed == 1:
-                        await discord_thread.send(response)
-                    else:
-                        message_count_header = f"**[{i+1}/{num_messages_needed}]** "
-                        end_index = start_index + MAX_CHARS_DISCORD - len(message_count_header)
-                        await discord_thread.send(message_count_header + response[start_index:end_index])
-                        start_index = end_index
-
-                with open(CONVERSATION_FILE, 'w', encoding='utf-8') as logs:
-                    json.dump(conversations_logs, logs, indent=4)
+                await send_response_to_discord(discord_thread, message_content.value)
 
             else:
 
@@ -188,61 +122,31 @@ async def on_message(discord_message):
 
         except Exception:
 
-            text = discord_message.content[(len(HELP_COMMAND) + 1):]
-            if discord_thread is None:
-                is_thread = isinstance(discord_message.channel, discord.Thread) or isinstance(discord_thread, discord.Thread)
-                if is_thread:
-                    discord_thread = discord_message.channel
-                else:
-                    discord_thread_name = THREAD_TITLE_ERROR_MESSAGE
-                    discord_thread = await discord_message.create_thread(name=discord_thread_name)
-                    current_message = {"role": "user", "content": f"{text}"}
-                    conversations_logs[discord_thread.id] = {
-                        "message_author": discord_message.author.name, 
-                        "message_log": [current_message]
-                    }
-            try:
-                text_language = detect_message_language(text)
-                translated_error_message = GoogleTranslator(source='auto', target=text_language).translate(BOT_ERROR_MESSAGE)
-            except Exception:
-                translated_error_message = BOT_ERROR_MESSAGE
-                logging.exception("ERROR OCCURRED")
-            conversations_logs[discord_thread.id]["message_log"].append({"role": "assistant", "content": translated_error_message})
+            text = discord_message.content.removeprefix(HELP_COMMAND + " ")
+            current_message = {"role": "user", "content": f"{text}"}
+            discord_thread, existing_thread = await get_discord_thread(openai_client, discord_message, THREAD_TITLE_ERROR_MESSAGE)
+            await send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language)
+            translated_error_message = translate_error_message(text)
+            conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, current_message, translated_error_message, existing_thread)
             await discord_thread.send(translated_error_message)
             logging.exception("ERROR OCCURRED")
 
 
     elif discord_message.content.startswith(REVIEW_COMMAND):
 
+        openai_client = OpenAI()
+        discord_thread, existing_thread = await get_discord_thread(openai_client, discord_message, discord_thread_name=THREAD_TITLE_ERROR_MESSAGE)
+        # store the review or send an error message that review can't be done
         try:
-            # store the review or send an error message that review can't be done
-            text = discord_message.content[(len(REVIEW_COMMAND) + 1):]
-            is_thread = isinstance(discord_message.channel, discord.Thread)
-            if is_thread:
-                discord_thread = discord_message.channel
-                first_thread_message = conversations_logs[discord_thread.id]["message_log"][0]["content"]
-                text_language = detect_message_language(first_thread_message)
-                try:
-                    user_rating = float(text)
-                    if (1 <= user_rating <= 10) and (discord_message.author.name == conversations_logs[discord_thread.id]["message_author"]):
-                        conversations_logs[discord_thread.id]["rating"] = user_rating
-                        await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_SUCCESS_MESSAGE))
-                    else:
-                        await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_FAILURE_MESSAGE))
-                except ValueError:
-                    await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_FAILURE_MESSAGE))
+            conversations_logs = await submit_review(discord_thread, discord_message, conversations_logs)
 
         except Exception:
             # communicate to user that there is a fatal error
-            if discord_thread is None:
-                is_thread = isinstance(discord_message.channel, discord.Thread) or isinstance(discord_thread, discord.Thread)
-                if is_thread:
-                    discord_thread = discord_message.channel
-                else:
-                    discord_thread_name = THREAD_TITLE_ERROR_MESSAGE
-                    discord_thread = await discord_message.create_thread(name=discord_thread_name)
-
             await discord_thread.send(BOT_ERROR_MESSAGE)
             logging.exception("ERROR OCCURRED")
+
+    # save the conversation logs
+    with open(CONVERSATION_FILE, 'w', encoding='utf-8') as logs:
+        json.dump(conversations_logs, logs, indent=4)
 
 discord_client.run(os.getenv("DISCORD_TOKEN"))
