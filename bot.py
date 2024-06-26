@@ -98,10 +98,10 @@ async def on_message(discord_message):
                 )
 
                 # extract assistant response if run successfully completed
-                # this response is the only added message to the thread so openai_message only stores one message
                 openai_message = await get_assistant_response(openai_client, openai_thread, run, discord_thread)
 
                 # extract the message content
+                # the list is populated from the front so the first message is the most recent assistant response
                 message_content = openai_message.data[0].content[0].text
                 # handle citations
                 annotations, citations = extract_citations(openai_client, message_content)
@@ -123,10 +123,11 @@ async def on_message(discord_message):
         except Exception:
 
             text = discord_message.content.removeprefix(HELP_COMMAND + " ")
+            text_language = detect_message_language(text)
             current_message = {"role": "user", "content": f"{text}"}
             discord_thread, existing_thread = await get_discord_thread(openai_client, discord_message, THREAD_TITLE_ERROR_MESSAGE)
             await send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language)
-            translated_error_message = translate_error_message(text)
+            translated_error_message = translate_error_message(text_language)
             conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, current_message, translated_error_message, existing_thread)
             await discord_thread.send(translated_error_message)
             logging.exception("ERROR OCCURRED")

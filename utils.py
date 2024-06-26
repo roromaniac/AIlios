@@ -299,10 +299,25 @@ async def populate_openai_assistant_content(openai_client, discord_message, disc
     return text_content, image_content
 
 def log_conversation(conversations_logs, discord_message, discord_thread, text_language, current_message, assistant_message, existing_thread):
+    """
+        Logs a conversation.
 
+        Args:
+            conversations_logs (dict): The log of conversations indexed by discord thread id.
+            discord_message (discord.Message): The current discord message object.
+            discord_thread (discord.Thread): The discord thread of the current message.
+            text_language (str): The language code of the message.
+            current_message (dict): The user's current inquiry message to include in the logs.
+            assistant_message (str): The assistant response to include in the log.
+            existing_thread (bool): Status of whether the thread already exists or not.
+
+        Returns:
+            conversations_logs (dict): A conversation log updated with the new user + assistant message.
+
+    """
     if existing_thread:
         # add the last message to the existing log for this thread
-        conversations_logs[discord_thread.id]["message_log"].append(current_message)
+        conversations_logs[discord_thread.id]["message_log"].append([current_message, {"role": "assistant", "content": assistant_message}])
     else:
         # initialize conversation log with original help message and original response
         conversations_logs[discord_thread.id] = {
@@ -314,8 +329,16 @@ def log_conversation(conversations_logs, discord_message, discord_thread, text_l
 
     return conversations_logs
 
-async def send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language):
+async def send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language='en'):
+    """
+        Sends initial discord message upon new inquiry from user. 
 
+        Args:
+            discord_thread (discord.Thread | None): The discord thread where the new inquiry message is located.
+            existing_thread (bool): Status of whether the thread already exists or not.
+            discord_message (discord.Message): The discord message associated with the new inquiry. 
+            text_language (str): The language code to translate the initial message to.
+    """
     if existing_thread:
         header = EXISTING_THREAD_HEADER
         header = GoogleTranslator(source='auto', target=text_language).translate(header)
@@ -327,10 +350,18 @@ async def send_initial_discord_response(discord_thread, existing_thread, discord
         await discord_thread.send(header)
         await discord_thread.send(SEPARATOR)
 
-    return header
-
 async def submit_review(discord_thread, discord_message, conversations_logs):
+    """
+        Submits the review to logs and responds with the appropriate discord messages.
 
+        Args:
+            discord_thread (discord.Thread): The discord thread for discord to send message to.
+            discord_message (discord.Message): The current message object. Used to see if the reviewer is the original author.
+            conversations_logs (dict): The conversation logging dictionary used to update the rating of this thread.
+
+        Returns:
+            conversations_logs (dict): The updated conversation logs.
+    """
     text = discord_message.content.removeprefix(REVIEW_COMMAND + " ")
 
     if is_discord_thread(discord_message, discord_thread):
@@ -349,11 +380,18 @@ async def submit_review(discord_thread, discord_message, conversations_logs):
 
     return conversations_logs
 
-def translate_error_message(message):
+def translate_error_message(language):
+    """
+        Translate the bot's error message to a different language.
 
+        Args:
+           language (str): The language code to serve as the translation target in GoogleTranslator.
+
+        Returns:
+            translated_error_message (str): The translated bot error message.
+    """
     try:
-        text_language = detect_message_language(message)
-        translated_error_message = GoogleTranslator(source='auto', target=text_language).translate(BOT_ERROR_MESSAGE)
+        translated_error_message = GoogleTranslator(source='auto', target=language).translate(BOT_ERROR_MESSAGE)
     except Exception:
         translated_error_message = BOT_ERROR_MESSAGE
         logging.exception("ERROR OCCURRED")
@@ -361,7 +399,21 @@ def translate_error_message(message):
     return translated_error_message
 
 async def get_assistant_response(openai_client, openai_thread, run, discord_thread):
+    """
+        Retrieves the OpenAI assistant response from the appropriate thread.
 
+        Args:
+            openai_client (openai.OpenAI): The OpenAI client to use for response retrieval.
+            openai_thread (openai.Thread): The thread used to facilitate assistant response.
+            run (openai.Run): The run object containing status information about the ping to the assistant.
+            discord_thread (discord.Thread): The discord thread to send messages to if rate limit issues with OpenAI happen.
+
+        Returns:
+            openai_message (openai.pagination.SyncCursorPage[Message]): The response from the assistant.
+
+        Raises:
+            RuntimeError: If the OpenAI assistant ping fails for any reason, a RuntimeError is raised.
+    """
     if run.status == 'completed':
         openai_message = openai_client.beta.threads.messages.list(
             thread_id=openai_thread.id
