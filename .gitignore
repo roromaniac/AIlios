@@ -6,3 +6,4 @@ conversation_logs
 app.log
 conversation_logging.json
 .__init__.py
+__pycache__
