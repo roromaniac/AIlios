@@ -53,12 +53,13 @@ async def on_message(discord_message):
         try:
 
             discord_thread = None
+            openai_client = OpenAI()
 
             # check if memory is getting close to server limit
             await storage_check(discord_client)
 
             # handle rate limits
-            remaining, reset = check_rate_limit("channels/1238177913212502087/messages")
+            remaining, reset = check_rate_limit(f"channels/{discord_message.channel.id}/messages")
             rate_limit_met = await handle_rate_limit(discord_message, float(remaining), float(reset), is_discord_thread(discord_message, discord_thread))
             if rate_limit_met:
                 return
@@ -71,7 +72,6 @@ async def on_message(discord_message):
             if len(text) <= MAX_CHARS_DISCORD:
 
                 current_message = {"role": "user", "content": f"{text}"}
-                openai_client = OpenAI()
 
                 discord_thread, existing_thread = await get_discord_thread(openai_client, discord_message, message_content=text)
                 initial_message = await send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language)
@@ -99,6 +99,9 @@ async def on_message(discord_message):
 
                 # extract assistant response if run successfully completed
                 openai_message = await get_assistant_response(openai_client, openai_thread, run, discord_thread)
+
+                # log the cost of getting the last response
+                conversations_logs[discord_thread.id]["cost_in_dollars"] += get_openai_run_cost(run)
 
                 # extract the message content
                 # the list is populated from the front so the first message is the most recent assistant response

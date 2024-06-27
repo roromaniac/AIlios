@@ -151,7 +151,7 @@ async def get_discord_thread(openai_client, discord_message, discord_thread_name
             discord_thread (discord.Thread): The discord thread the message belongs to.
             existing_thread (bool): A status of if the thread existed prior to function call.
     """
-    existing_thread = is_discord_thread(discord_message, discord_thread=None)
+    existing_thread = is_discord_thread(discord_message)
     if existing_thread:
         discord_thread = discord_message.channel
     else:
@@ -167,6 +167,18 @@ async def get_discord_thread(openai_client, discord_message, discord_thread_name
         discord_thread = await discord_message.create_thread(name=discord_thread_name)
 
     return discord_thread, existing_thread
+
+def get_openai_run_cost(run):
+    """
+        Gets the cost of generating the assistant response.
+
+        Args:
+            run (openai.Run): The run object used to generate an assistant response.
+
+        Returns:
+            cost (float): The cost in USD for extracting the assistant response. 
+    """
+    return INPUT_1K_TOKEN_COST_IN_DOLLARS * (run.usage.prompt_tokens / 1000) + OUTPUT_1K_TOKEN_COST_IN_DOLLARS * (run.usage.completion_tokens / 1000)
 
 async def handle_rate_limit(discord_message, remaining, reset, is_thread):
     """
@@ -191,7 +203,7 @@ async def handle_rate_limit(discord_message, remaining, reset, is_thread):
         return True
     return False
 
-def is_discord_thread(discord_message, discord_thread):
+def is_discord_thread(discord_message, discord_thread=None):
     """
         Checks the status of the message of being in an existing discord thread.
 
@@ -199,7 +211,7 @@ def is_discord_thread(discord_message, discord_thread):
             discord_message (discord.Message): the discord message to check for thread status
             discord_thread (discord.Thread or None): the possible discord thread being checked, will be None if a thread has not yet been created
     """
-    return isinstance(discord_message.channel, discord.Thread) or isinstance(discord_thread, discord.Thread)
+    return isinstance(discord_message.channel, discord.Thread) or message_has_thread(discord_message) or isinstance(discord_thread, discord.Thread)
 
 def log_conversation(conversations_logs, discord_message, discord_thread, text_language, current_message, assistant_message, existing_thread):
     """
@@ -218,19 +230,33 @@ def log_conversation(conversations_logs, discord_message, discord_thread, text_l
             conversations_logs (dict): A conversation log updated with the new user + assistant message.
 
     """
-    if existing_thread:
+    if existing_thread and discord_thread.id in conversations_logs:
         # add the last message to the existing log for this thread
-        conversations_logs[discord_thread.id]["message_log"].append([current_message, {"role": "assistant", "content": assistant_message}])
+        conversations_logs[discord_thread.id]["message_log"] += [current_message, {"role": "assistant", "content": assistant_message}]
     else:
         # initialize conversation log with original help message and original response
         conversations_logs[discord_thread.id] = {
+            "cost_in_dollars": 0,
             "message_author": discord_message.author.name, 
             "message_content_summary": discord_thread.name.removeprefix(f"{THREAD_CATEGORY}: "),
             "message_language": text_language,
-            "message_log": [current_message, {"role": "assistant", "content": assistant_message}]
+            "message_log": [current_message, {"role": "assistant", "content": assistant_message}],
+            "rating": None,
         }
 
     return conversations_logs
+
+def message_has_thread(discord_message):
+    """
+        Checks if the message already has a thread created.
+
+        Args:
+            discord_message (discord.Message): The message for which thread attribute is checked.
+    """
+    for thread in discord_message.channel.threads:
+        if thread.id == discord_message.id:
+            return True
+    return False
 
 async def populate_openai_assistant_content(openai_client, discord_message, discord_message_contents):
     """
@@ -287,6 +313,9 @@ async def send_initial_discord_response(discord_thread, existing_thread, discord
             existing_thread (bool): Status of whether the thread already exists or not.
             discord_message (discord.Message): The discord message associated with the new inquiry. 
             text_language (str): The language code to translate the initial message to.
+
+        Returns:
+            header (str): The initial message sent to discord to use for logging purposes.
     """
     if existing_thread:
         header = EXISTING_THREAD_HEADER
@@ -298,6 +327,8 @@ async def send_initial_discord_response(discord_thread, existing_thread, discord
         header = GoogleTranslator(source='auto', target=text_language).translate(header)
         await discord_thread.send(header)
         await discord_thread.send(SEPARATOR)
+
+    return header
 
 async def send_response_to_discord(discord_thread, response):
     """
