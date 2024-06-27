@@ -4,3 +4,4 @@ discord
 langdetect
 deep_translator
 requests
+pillow

@@ -11,6 +11,7 @@ import re
 import tempfile
 import requests
 import aiohttp
+from PIL import Image
 from deep_translator import GoogleTranslator
 from dotenv import load_dotenv
 from langdetect import detect_langs
@@ -63,17 +64,19 @@ def detect_message_language(message):
     text_language = detected_language.lang if change_language else DEFAULT_LANGUAGE
     return text_language
 
-async def discord_to_openai_image_conversion(discord_message, openai_client):
+async def discord_to_openai_image_conversion(discord_message, discord_thread, openai_client):
     """
         Converts images from discord format to OpenAI format.
 
         Args:
             discord_message (discord.Message): The discord message to check for attached images.
+            discord_thread (discord.Thread): The discord thread to send warnings/errors to.
+            openai_client (openai.OpenAI): The OpenAI client to upload images to.
 
         Returns:
             image_files (list): A list of image content dictionaries to be uploaded to the OpenAI assistant.
     """
-    attached_images = await process_discord_message_attachments(discord_message)
+    attached_images = await process_discord_message_attachments(discord_message, discord_thread)
     image_files = []
     for filename, image_data in attached_images:
         file_response = await upload_image_to_openai(openai_client, image_data, filename)
@@ -168,17 +171,20 @@ async def get_discord_thread(openai_client, discord_message, discord_thread_name
 
     return discord_thread, existing_thread
 
-def get_openai_run_cost(run):
+def get_openai_run_cost(run, num_images):
     """
         Gets the cost of generating the assistant response.
 
         Args:
             run (openai.Run): The run object used to generate an assistant response.
+            num_images (int): The number of images included in the inquiry to the assistant.
 
         Returns:
-            cost (float): The cost in USD for extracting the assistant response. 
+            input_cost (float): The cost in USD for the input tokens to the assistant.
+            output_cost (float): The cost in USD for the assistant's completion.
+            image_cost (float): The cost in USD for utilizing image input.
     """
-    return INPUT_1K_TOKEN_COST_IN_DOLLARS * (run.usage.prompt_tokens / 1000) + OUTPUT_1K_TOKEN_COST_IN_DOLLARS * (run.usage.completion_tokens / 1000)
+    return INPUT_1K_TOKEN_COST_IN_DOLLARS * (run.usage.prompt_tokens / 1000), OUTPUT_1K_TOKEN_COST_IN_DOLLARS * (run.usage.completion_tokens / 1000), IMAGE_COST_IN_DOLLARS * num_images
 
 async def handle_rate_limit(discord_message, remaining, reset, is_thread):
     """
@@ -213,7 +219,7 @@ def is_discord_thread(discord_message, discord_thread=None):
     """
     return isinstance(discord_message.channel, discord.Thread) or message_has_thread(discord_message) or isinstance(discord_thread, discord.Thread)
 
-def log_conversation(conversations_logs, discord_message, discord_thread, text_language, current_message, assistant_message, existing_thread):
+def log_conversation(conversations_logs, discord_message, discord_thread, text_language, role, current_message, existing_thread):
     """
         Logs a conversation.
 
@@ -222,25 +228,34 @@ def log_conversation(conversations_logs, discord_message, discord_thread, text_l
             discord_message (discord.Message): The current discord message object.
             discord_thread (discord.Thread): The discord thread of the current message.
             text_language (str): The language code of the message.
-            current_message (dict): The user's current inquiry message to include in the logs.
-            assistant_message (str): The assistant response to include in the log.
+            role (str): The role of the message sender.
+            current_message (dict): The content of the message to be logged.
             existing_thread (bool): Status of whether the thread already exists or not.
 
         Returns:
             conversations_logs (dict): A conversation log updated with the new user + assistant message.
 
+        Raises:
+            ValueError if role is not in ["user", "assistant"]. 
     """
+    if role not in ["user", "assistant"]:
+        raise ValueError("OpenAI must receive messages from either the role of user or assistant.")
     if existing_thread and discord_thread.id in conversations_logs:
         # add the last message to the existing log for this thread
-        conversations_logs[discord_thread.id]["message_log"] += [current_message, {"role": "assistant", "content": assistant_message}]
+        conversations_logs[discord_thread.id]["message_log"] += [{"role": role, "content": current_message}]
     else:
         # initialize conversation log with original help message and original response
         conversations_logs[discord_thread.id] = {
-            "cost_in_dollars": 0,
+            "cost_in_dollars": {
+                "input_cost": 0,
+                "output_cost": 0,
+                "image_cost": 0,
+                "total_cost": 0
+            },
             "message_author": discord_message.author.name, 
             "message_content_summary": discord_thread.name.removeprefix(f"{THREAD_CATEGORY}: "),
             "message_language": text_language,
-            "message_log": [current_message, {"role": "assistant", "content": assistant_message}],
+            "message_log": [{"role": role, "content": current_message}],
             "rating": None,
         }
 
@@ -258,13 +273,14 @@ def message_has_thread(discord_message):
             return True
     return False
 
-async def populate_openai_assistant_content(openai_client, discord_message, discord_message_contents):
+async def populate_openai_assistant_content(openai_client, discord_message, discord_thread, discord_message_contents):
     """
         Creates jsons of text and image data to send to OpenAI assistant.
 
         Args:
             openai_client (openai.OpenAI): The OpenAI client to send messages to. 
             discord_message (discord.Message) The discord message to extract potential attachments from.
+            discord_thread (discord.Thread): The thread to send warning/error messages to.
             discord_message_contents (str): The contents of the message to pass to text data.
 
         Returns:
@@ -278,17 +294,18 @@ async def populate_openai_assistant_content(openai_client, discord_message, disc
 
     image_content = []
     if len(discord_message.attachments) > 0:
-        image_content = await discord_to_openai_image_conversion(discord_message, openai_client)
+        image_content = await discord_to_openai_image_conversion(discord_message, discord_thread, openai_client)
 
     return text_content, image_content
 
-async def process_discord_message_attachments(discord_message):
+async def process_discord_message_attachments(discord_message, discord_thread):
     """
         Rate limit checker.
 
         Args:
             discord_message (discord.Message): A discord message to check for attachements (images).
-
+            discord_thread (discord.Thread): The discord thread to send warnings/errors to in case of error.
+            
         Returns:
             attached_images (list): A list of processed images in the discord message.
     """
@@ -301,7 +318,14 @@ async def process_discord_message_attachments(discord_message):
                         async with session.get(file.url) as response:
                             if response.status == 200:
                                 image_data = await response.read()
-                                attached_images.append((file.filename, image_data))
+                                image = Image.open(io.BytesIO(image_data))
+                                if len(attached_images) >= MAX_ATTACHMENTS_ALLOWED:
+                                    await send_response_to_discord(discord_thread, MAX_ATTACHMENTS_MESSAGE)
+                                    return attached_images
+                                if image.width <= 512 and image.height <= 512:
+                                    attached_images.append((file.filename, image_data))
+                                else:
+                                    await send_response_to_discord(discord_thread, IMAGE_TOO_LARGE_MESSAGE % file.filename)
         return attached_images
 
 async def send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language='en'):
@@ -416,6 +440,28 @@ async def submit_review(discord_thread, discord_message, conversations_logs):
             await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(REVIEW_FAILURE_MESSAGE))
 
     return conversations_logs
+
+def thread_message_counts(conversations_logs, discord_thread):
+    """
+        Counts the number of user messages in a thread.
+
+        Args:
+            conversations_logs (dict): The conversation log.
+            discord_thread (discord.Thread): The thread for which to check number of user messages.
+
+        Returns:
+            user_messages (int): The number of user messages detected in thread.
+        
+        Raises:
+            KeyError if the discord_thread id is not logged in the conversation logs.
+    """
+    try:
+        message_list = conversations_logs[discord_thread.id]["message_log"]
+        user_messages = sum([message["role"] == "user" for message in message_list])
+    except KeyError as e:
+        raise KeyError("This thread id has not been logged in the conversations.") from e
+
+    return user_messages
 
 def translate_error_message(language):
     """

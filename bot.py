@@ -71,11 +71,13 @@ async def on_message(discord_message):
 
             if len(text) <= MAX_CHARS_DISCORD:
 
-                current_message = {"role": "user", "content": f"{text}"}
-
                 discord_thread, existing_thread = await get_discord_thread(openai_client, discord_message, message_content=text)
-                initial_message = await send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language)
-                conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, current_message, initial_message, existing_thread)
+                await send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language)
+                conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, "user", text, existing_thread)
+
+                if thread_message_counts(conversations_logs, discord_thread) > MAX_MESSAGES_ALLOWED_IN_THREAD:
+                    await send_response_to_discord(discord_thread, MAX_MESSAGES_REACHED_MESSAGE)
+                    return
 
                 # establish existing conversation thread for context
                 openai_thread = openai_client.beta.threads.create(
@@ -83,7 +85,7 @@ async def on_message(discord_message):
                 )
 
                 # create text and image content to send to assistant
-                text_content, image_content = await populate_openai_assistant_content(openai_client, discord_message, text)
+                text_content, image_content = await populate_openai_assistant_content(openai_client, discord_message, discord_thread, text)
                 _ = openai_client.beta.threads.messages.create(
                     thread_id=openai_thread.id,
                     role="user",
@@ -101,7 +103,11 @@ async def on_message(discord_message):
                 openai_message = await get_assistant_response(openai_client, openai_thread, run, discord_thread)
 
                 # log the cost of getting the last response
-                conversations_logs[discord_thread.id]["cost_in_dollars"] += get_openai_run_cost(run)
+                input_cost, output_cost, image_cost = get_openai_run_cost(run, len(image_content))
+                conversations_logs[discord_thread.id]["cost_in_dollars"]["input_cost"] += input_cost
+                conversations_logs[discord_thread.id]["cost_in_dollars"]["output_cost"] += output_cost
+                conversations_logs[discord_thread.id]["cost_in_dollars"]["image_cost"] += image_cost
+                conversations_logs[discord_thread.id]["cost_in_dollars"]["total_cost"] += (input_cost + output_cost + image_cost)
 
                 # extract the message content
                 # the list is populated from the front so the first message is the most recent assistant response
@@ -109,8 +115,8 @@ async def on_message(discord_message):
                 # handle citations
                 annotations, citations = extract_citations(openai_client, message_content)
 
-                # log conversation with knowledge files cited.
-                conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, current_message, message_content.value + '\n' + '\n'.join(citations), existing_thread)
+                # log conversation with knowledge files cited (in a thread that already exists)
+                conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, "assistant", message_content.value + '\n' + '\n'.join(citations), True)
 
                 for index, _ in enumerate(annotations):
                     # remove source citation text
@@ -127,11 +133,11 @@ async def on_message(discord_message):
 
             text = discord_message.content.removeprefix(HELP_COMMAND + " ")
             text_language = detect_message_language(text)
-            current_message = {"role": "user", "content": f"{text}"}
+            current_message = {"role": "user", "content": text}
             discord_thread, existing_thread = await get_discord_thread(openai_client, discord_message, THREAD_TITLE_ERROR_MESSAGE)
             await send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language)
             translated_error_message = translate_error_message(text_language)
-            conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, current_message, translated_error_message, existing_thread)
+            conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, "assistant", translated_error_message, existing_thread)
             await discord_thread.send(translated_error_message)
             logging.exception("ERROR OCCURRED")
 
