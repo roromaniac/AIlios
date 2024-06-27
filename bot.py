@@ -133,7 +133,6 @@ async def on_message(discord_message):
 
             text = discord_message.content.removeprefix(HELP_COMMAND + " ")
             text_language = detect_message_language(text)
-            current_message = {"role": "user", "content": text}
             discord_thread, existing_thread = await get_discord_thread(openai_client, discord_message, THREAD_TITLE_ERROR_MESSAGE)
             await send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language)
             translated_error_message = translate_error_message(text_language)
