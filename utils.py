@@ -184,7 +184,9 @@ def get_openai_run_cost(run, num_images):
             output_cost (float): The cost in USD for the assistant's completion.
             image_cost (float): The cost in USD for utilizing image input.
     """
-    return INPUT_1K_TOKEN_COST_IN_DOLLARS * (run.usage.prompt_tokens / 1000), OUTPUT_1K_TOKEN_COST_IN_DOLLARS * (run.usage.completion_tokens / 1000), IMAGE_COST_IN_DOLLARS * num_images
+    input_1k_token_cost_in_dollars = OPENAI_PRICING[run.model]["input"]
+    output_1k_token_cost_in_dollars = OPENAI_PRICING[run.model]["output"]
+    return input_1k_token_cost_in_dollars * (run.usage.prompt_tokens / 1000), output_1k_token_cost_in_dollars * (run.usage.completion_tokens / 1000), IMAGE_COST_IN_DOLLARS * num_images
 
 async def handle_rate_limit(discord_message, remaining, reset, is_thread):
     """
