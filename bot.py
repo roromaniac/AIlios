@@ -14,6 +14,7 @@ import openai
 from openai import OpenAI
 
 from config import *
+from messages import *
 from utils import *
 
 load_dotenv()
@@ -50,10 +51,15 @@ async def on_message(discord_message):
 
     if discord_message.content.startswith(HELP_COMMAND):
 
-        try:
+        discord_thread = None
+        openai_client = OpenAI()
 
-            discord_thread = None
-            openai_client = OpenAI()
+        # remove command from query
+        text = discord_message.content.removeprefix(HELP_COMMAND + " ")
+
+        text_language = detect_message_language(text)
+
+        try:
 
             # check if memory is getting close to server limit
             await storage_check(discord_client)
@@ -63,76 +69,67 @@ async def on_message(discord_message):
             rate_limit_met = await handle_rate_limit(discord_message, float(remaining), float(reset), is_discord_thread(discord_message, discord_thread))
             if rate_limit_met:
                 return
-
-            # remove command from query
-            text = discord_message.content.removeprefix(HELP_COMMAND + " ")
-
-            text_language = detect_message_language(text)
-
-            if len(text) <= MAX_CHARS_DISCORD:
-
-                discord_thread, existing_thread = await get_discord_thread(openai_client, discord_message, message_content=text)
-                await send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language)
-                conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, "user", text, existing_thread)
-
-                if thread_message_counts(conversations_logs, discord_thread) > MAX_MESSAGES_ALLOWED_IN_THREAD:
-                    await send_response_to_discord(discord_thread, MAX_MESSAGES_REACHED_MESSAGE)
-                    return
-
-                # establish existing conversation thread for context
-                openai_thread = openai_client.beta.threads.create(
-                    messages = conversations_logs[discord_thread.id]["message_log"]
-                )
-
-                # create text and image content to send to assistant
-                text_content, image_content = await populate_openai_assistant_content(openai_client, discord_message, discord_thread, text)
-                _ = openai_client.beta.threads.messages.create(
-                    thread_id=openai_thread.id,
-                    role="user",
-                    content=text_content + image_content
-                )
-
-                # attempt to extract response
-                run = openai_client.beta.threads.runs.create_and_poll(
-                    thread_id=openai_thread.id,
-                    assistant_id=OPENAI_ASSISTANT,
-                    max_completion_tokens=MAX_COMPLETION_TOKENS,
-                )
-
-                # extract assistant response if run successfully completed
-                openai_message = await get_assistant_response(openai_client, openai_thread, run, discord_thread)
-
-                # log the cost of getting the last response
-                input_cost, output_cost, image_cost = get_openai_run_cost(run, len(image_content))
-                conversations_logs[discord_thread.id]["cost_in_dollars"]["input_cost"] += input_cost
-                conversations_logs[discord_thread.id]["cost_in_dollars"]["output_cost"] += output_cost
-                conversations_logs[discord_thread.id]["cost_in_dollars"]["image_cost"] += image_cost
-                conversations_logs[discord_thread.id]["cost_in_dollars"]["total_cost"] += (input_cost + output_cost + image_cost)
-
-                # extract the message content
-                # the list is populated from the front so the first message is the most recent assistant response
-                message_content = openai_message.data[0].content[0].text
-                # handle citations
-                annotations, citations = extract_citations(openai_client, message_content)
-
-                # log conversation with knowledge files cited (in a thread that already exists)
-                conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, "assistant", message_content.value + '\n' + '\n'.join(citations), True)
-
-                for index, _ in enumerate(annotations):
-                    # remove source citation text
-                    message_content.value = message_content.value.replace(f' [{index}]', '')
-
-                # send response to discord using several messages if need be
-                await send_response_to_discord(discord_thread, message_content.value)
-
-            else:
-
+            
+            if len(text) > MAX_CHARS_DISCORD:
                 await discord_thread.send(TOO_LONG_DISCORD_MESSAGE_ERROR_MESSAGE)
+                return
+
+            discord_thread, existing_thread = await get_discord_thread(openai_client, discord_message, message_content=text)
+            await send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language)
+            conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, "user", text, existing_thread)
+
+            if thread_message_counts(conversations_logs, discord_thread) > MAX_MESSAGES_ALLOWED_IN_THREAD:
+                await send_response_to_discord(discord_thread, MAX_MESSAGES_REACHED_MESSAGE)
+                return
+
+            # establish existing conversation thread for context
+            openai_thread = openai_client.beta.threads.create(
+                messages = conversations_logs[discord_thread.id]["message_log"]
+            )
+
+            # create text and image content to send to assistant
+            text_content, image_content = await populate_openai_assistant_content(openai_client, discord_message, discord_thread, text)
+            _ = openai_client.beta.threads.messages.create(
+                thread_id=openai_thread.id,
+                role="user",
+                content=text_content + image_content
+            )
+
+            # attempt to extract response
+            run = openai_client.beta.threads.runs.create_and_poll(
+                thread_id=openai_thread.id,
+                assistant_id=OPENAI_ASSISTANT,
+                max_completion_tokens=MAX_COMPLETION_TOKENS,
+            )
+
+            # extract assistant response if run successfully completed
+            openai_message = await get_assistant_response(openai_client, openai_thread, run, discord_thread)
+
+            # log the cost of getting the last response
+            input_cost, output_cost, image_cost = get_openai_run_cost(run, len(image_content))
+            conversations_logs[discord_thread.id]["cost_in_dollars"]["input_cost"] += input_cost
+            conversations_logs[discord_thread.id]["cost_in_dollars"]["output_cost"] += output_cost
+            conversations_logs[discord_thread.id]["cost_in_dollars"]["image_cost"] += image_cost
+            conversations_logs[discord_thread.id]["cost_in_dollars"]["total_cost"] += (input_cost + output_cost + image_cost)
+
+            # extract the message content
+            # the list is populated from the front so the first message is the most recent assistant response
+            message_content = openai_message.data[0].content[0].text
+            # handle citations
+            annotations, citations = extract_citations(openai_client, message_content)
+
+            # log conversation with knowledge files cited (in a thread that already exists)
+            conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, "assistant", message_content.value + '\n' + '\n'.join(citations), True)
+
+            for index, _ in enumerate(annotations):
+                # remove source citation text
+                message_content.value = message_content.value.replace(f' [{index}]', '')
+
+            # send response to discord using several messages if need be
+            await send_response_to_discord(discord_thread, message_content.value)  
 
         except Exception:
 
-            text = discord_message.content.removeprefix(HELP_COMMAND + " ")
-            text_language = detect_message_language(text)
             discord_thread, existing_thread = await get_discord_thread(openai_client, discord_message, THREAD_TITLE_ERROR_MESSAGE)
             await send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language)
             translated_error_message = translate_error_message(text_language)
