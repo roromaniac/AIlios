@@ -19,6 +19,7 @@ from langdetect import detect_langs
 import discord
 
 from config import *
+from messages import *
 
 load_dotenv()
 
@@ -149,6 +150,9 @@ async def get_discord_thread(openai_client, discord_message, discord_thread_name
         Args:
             discord_message (discord.Message): The discord message to get the thread for.
             discord_thread_name (str): The title of the discord thread if a thread has not yet been created.
+
+        Outputs:
+            A discord thread with a title related to the message content.
 
         Returns:
             discord_thread (discord.Thread): The discord thread the message belongs to.
@@ -307,6 +311,9 @@ async def process_discord_message_attachments(discord_message, discord_thread):
         Args:
             discord_message (discord.Message): A discord message to check for attachements (images).
             discord_thread (discord.Thread): The discord thread to send warnings/errors to in case of error.
+
+        Outputs:
+            A message warning a user if they include too many attachments or images that are too large.
             
         Returns:
             attached_images (list): A list of processed images in the discord message.
@@ -340,6 +347,9 @@ async def send_initial_discord_response(discord_thread, existing_thread, discord
             discord_message (discord.Message): The discord message associated with the new inquiry. 
             text_language (str): The language code to translate the initial message to.
 
+        Outputs:
+            An introductory message the bot sends to the user when a new inquiry is made.
+
         Returns:
             header (str): The initial message sent to discord to use for logging purposes.
     """
@@ -363,6 +373,9 @@ async def send_response_to_discord(discord_thread, response):
         Args:
             discord_thread (discord.Thread): The discord thread to send messages to.
             response (str): The response from the OpenAI assistant.
+
+        Outputs:
+            A message with the assistant's response.
     """
     num_messages_needed = (len(response) // MAX_CHARS_DISCORD) + 1
     start_index = 0
@@ -421,6 +434,9 @@ async def submit_review(discord_thread, discord_message, conversations_logs):
             discord_thread (discord.Thread): The discord thread for discord to send message to.
             discord_message (discord.Message): The current message object. Used to see if the reviewer is the original author.
             conversations_logs (dict): The conversation logging dictionary used to update the rating of this thread.
+
+        Outputs:
+            A message indicating whether the review was successfully submitted or not.
 
         Returns:
             conversations_logs (dict): The updated conversation logs.

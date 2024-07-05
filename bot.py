@@ -69,7 +69,7 @@ async def on_message(discord_message):
             rate_limit_met = await handle_rate_limit(discord_message, float(remaining), float(reset), is_discord_thread(discord_message, discord_thread))
             if rate_limit_met:
                 return
-            
+
             if len(text) > MAX_CHARS_DISCORD:
                 await discord_thread.send(TOO_LONG_DISCORD_MESSAGE_ERROR_MESSAGE)
                 return
