@@ -5,3 +5,5 @@ langdetect
 deep_translator
 requests
 pillow
+datetime
+python-dateutil

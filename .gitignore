@@ -1,9 +1,12 @@
 .env
 .pylintrc
 gpt-ds
+ailios
 info.json
 conversation_logs
 app.log
 conversation_logging.json
 .__init__.py
 __pycache__
+gpt-crawler/.*
+knowledge-files/*
