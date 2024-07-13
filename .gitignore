@@ -10,3 +10,6 @@ conversation_logging.json
 __pycache__
 gpt-crawler/.*
 knowledge-files/*
+!knowledge-files/gpt-crawler/
+!knowledge-files/static-files/
+!knowledge-files/README.md

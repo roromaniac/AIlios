@@ -1,0 +1,974 @@
+﻿KINGDOM HEARTS II FINAL MIX
+GAME MECHANICS GUIDE
+
+
+The mechanics behind damage calculation in KH2 are both in-depth and complex. With the help of in game testing and confirmation with the various official strategy guides that have been printed, this small informational guide will go over the gameplay elements that deal with damage.
+Hopefully, this information can be useful to people who want some of the 'behind the scenes math' that goes on in the game. Please note that this info applies to both Kingdom Hearts 2 Final Mix on the PS2, as well as Kingdom Hearts 2 Final Mix that is included within the 2.5 Remix PS3 collection. Many of these numbers and statistics are different than those present within the original Kingdom Hearts 2 for PS2.
+The guide will start off with details about battle levels, then go into the damage formula, and finally list the attack multipliers of Sora's moves. It could be far more extensive, but the basics have been mostly covered. 
+
+
+BATTLE LEVELS:
+All enemy statistics in Kingdom Hearts 2 (HP, EXP, STR, DEF) are determined by the 'Battle Level' of the location in which they are found. The specifics of these statistics will be covered later. 
+These battle levels of a world can typically be noted by observing the number that is displayed on the world from the gummi map. The battle levels can change after certain game events take place. For example, on the first visit, Agrabah has a battle level of 22, and on the second visit, it has a battle level of 40. Also, certain rooms within a world can have different battle levels than the rest of the world. An example of this is Sephiroth who has a battle level of 80 even though he is fought within Hollow Bastion which has a battle level of 45 at the time.
+The following is a table that summarizes the battle levels of the game based on world/event/opponent:
+Level
+	HP
+	EXP
+	STR
+	DEF
+	World
+	1
+	20
+	4
+	5
+	2
+	Simulated Twilight Town (Day 1-3), 100 Acre Wood
+	2
+	21
+	5
+	6
+	2
+	Simulated Twilight Town (Day 4-5)
+	3
+	23
+	6
+	7
+	3
+	Simulated Twilight Town (Day 6)
+	6
+	28
+	9
+	9
+	4
+	Twilight Town 1
+	7
+	29
+	10
+	10
+	5
+	Mysterious Tower
+	8
+	31
+	12
+	11
+	5
+	Hollow Bastion 1
+	10
+	34
+	16
+	12
+	6
+	The Land of Dragons 1
+	13
+	39
+	23
+	15
+	8
+	Beast’s Castle 1
+	15
+	43
+	29
+	17
+	9
+	Hollow Bastion 2
+	16
+	44
+	33
+	17
+	9
+	Olympus Coliseum 1
+	18
+	48
+	41
+	19
+	10
+	Disney Castle
+	19
+	49
+	45
+	20
+	11
+	Timeless River
+	20
+	51
+	50
+	21
+	11
+	Port Royal 1
+	22
+	54
+	61
+	22
+	12
+	Agrabah 1
+	24
+	57
+	73
+	24
+	13
+	Halloween Town 1
+	25
+	59
+	-
+	25
+	14
+	Zexion's Absent Silhouette, Pain and Panic Cup
+	26
+	61
+	87
+	26
+	14
+	Pride Lands 1
+	28
+	64
+	102
+	27
+	15
+	Twilight Town 2, Hollow Bastion 3, Space Paranoids 1
+	30
+	67
+	119
+	29
+	16
+	Hollow Bastion 4, Cerberus Cup
+	32
+	71
+	-
+	31
+	17
+	Larxene's Absent Silhouette
+	35
+	76
+	170
+	34
+	19
+	The Land of Dragons 2, Cavern of Remembrance (Depths, Mineshaft A)
+	36
+	77
+	182
+	34
+	19
+	Beast’s Castle 2
+	37
+	79
+	194
+	35
+	20
+	Port Royal 2
+	38
+	81
+	207
+	36
+	20
+	Olympus Coliseum 2
+	40
+	84
+	234
+	37
+	21
+	Agrabah 2, Lexaeus' Absent Silhouette
+	41
+	86
+	248
+	39
+	22
+	Halloween Town 2
+	43
+	89
+	278
+	40
+	23
+	Pride Lands 2
+	45
+	92
+	310
+	42
+	24
+	Hollow Bastion 4, Space Paranoids 2, Titan Cup
+	47
+	95
+	344
+	43
+	25
+	Twilight Town 3
+	50
+	100
+	400
+	45
+	26
+	The World That Never Was, Vexen's Absent Silhouette
+	55
+	109
+	400
+	50
+	29
+	Goddess of Fate Cup, Cavern of Remembrance (Mineshaft B, Engine Chamber)
+	60
+	117
+	-
+	54
+	31
+	Pain and Panic Paradox Cup
+	70
+	133
+	-
+	62
+	36
+	Cerberus Paradox Cup
+	75
+	142
+	400
+	67
+	39
+	Cavern of Remembrance (Transport to Remembrance)
+	80
+	150
+	-
+	70
+	41
+	Titan Paradox Cup, Sephiroth, Marluxia's Absent Silhouette
+	99
+	181
+	-
+	86
+	51
+	Hades Paradox Cup, Data Battles, Lingering Will
+	
+
+As you can see, the STR and DEF of enemies are directly taken from this table. The HP and EXP values are numbers that get multiplied by a base value for each opponent. Using Sephiroth as another example, his battle level of 80 has an HP multiplier of 150. We know from strategy guides and observing his HP using the Scan ability that he has a total of 3000HP. 3000/150 = 20, meaning Sephiroth has a base HP of 20, which is then multiplied by 150 to get his total HP of 3000.
+EXP works in the same way, each opponent having a base EXP value which is multiplied by the value of that battle level. Note that all bosses and the Coliseum Cups do not provide EXP, so there are blank values in the EXP column for some of the above listed battle levels.
+
+
+DAMAGE EQUATION:
+Now for the actual damage calculation formula.
+
+This one formula determines the damage output of all attacks in the game. It seems simple, but it is more complex than it looks on the surface. 
+First, let's explain what these variables mean.
+DMG is how much HP will be lost. Simple.
+STR is the strength value of the attacker, whether it’s Sora attacking an enemy, or an enemy attacking Sora, it doesn't matter. All instances share the same base formula. The STR values of opponents is based on their battle level, which was covered in the previous section.
+DEF is the defense value of the attack recipient. Same as the above value, it doesn't matter if you are dealing with Sora taking the damage, or an opponent taking the damage, the formula still applies. Like Strength, the DEF values for opponents is based on their battle level.
+PM is short for Power Multiplier. This value is a number (usually something like 0.5, 1.0, or 2.0) that determines the 'power' of a particular attack. For example, the finishing hit in a combo will have a higher PM than the standard hits in the combo. The PM values for various attacks will be described later.
+RES is the elemental resistance of the attack recipient. This value is a bit more complex than those above, so I will go into a bit more detail right here:
+There are 6 damage types in KH2; 
+-Physical
+-Fire
+-Ice
+-Lightning
+-Dark
+-Light (or ‘Other’)
+Most playable characters, party members, and opponents have a resistance value of 1.0 for all 6 of these damage types. This means that they will take full damage from whatever attack is being dealt to them. 
+There are, however, a number of exceptions. Some of them are obvious, for example, Axel is weak against Ice damage and is completely immune to fire damage. Conversely, Vexen is weak to fire and immune to ice.
+Sora (and his party members) can augment their resistances to 4 of these 6 elements (Fire, Ice, Lightning, Dark) through the equipping of armor items. The in-game menus display this value as a percentage of resistance. A Firaga Bangle, for example, gives a 20% resistance to fire. This 20% value corresponds to a RES value of 0.8 in the damage calculation (1.0 - 20% = 0.8). 
+It should be noted that resistance equipment does not stack linearly. This means that equipping 2 items each with 20% fire resistance will not result in a 40% resistance, but instead yields a 36% resistance. This is because the second 20% is taken off of the remaining 80% which is left over after the first accessory's resistance is taken into account. Therefore, the resulting RES value is 0.64 in this situation (1.0 - 20% - 20% = 0.64).
+GM is a special value that deals with  what game mode you are playing on. This value is unique in the fact that it only 'sometimes' applies to Sora and other party members, and only 'sometimes' applies to opponents. When this variable comes into play, and what values it has, goes as follows depending on your game mode:
+Beginner - GM is set to 0.5 for all incoming damage to Sora and his party members. GM is set at a value of 1.5 for all outgoing damage to the game's opponents. This essentially means that you will take half damage from all attacks in the game, and enemies will receive one-and-a-half times full damage.
+Standard - GM is set to 1.0 for all damage. There is no modification for either Sora or the game's opponents, and all damage received on both sides is set at its full value.
+Proud - GM is set to 2.0 for all incoming damage to Sora and his party members. GM is still at a value of 1.0 for all outgoing damage to the game's opponents. This means you will take double damage from all enemy attacks, but they will still only take standard damage.
+Critical - GM is set to 2.0 for all incoming damage to Sora and his party members. GM is set to 1.25 for all outgoing damage to the game's opponents. This means that you take double damage from all attacks, but also you deal 25% more damage to opponents. This gives Sora in Critical mode a bit of a damage boost over all other game modes, meaning you will defeat enemies faster. However, keep in mind that Sora also only has half his max HP in Critical mode, so the double damage that is shared with Proud mode becomes particularly deadly.
+
+
+One final point of note for the damage formula is the presence of a minimum damage value for attacks. The nature of the formula means that if the recipient's DEF value is higher than the attacker's STR value, you can actually get a negative value in the equation. Since this makes no sense, the bracketed portion of the equation has a minimum value of 1. This means that the lowest damage that can be done is 1 point, no matter how high the recipient's DEF is. 
+For damage Sora deals to enemies, the minimum value is higher than 1. The value in the bracketed portion of the equation in this case has a minimum value of 8. Note that PM and RES take place after this minimum value is applied, so depending on the weakness of Sora's attack, and the resistance of the opponent, the actual damage dealt can still be as low as 1.
+
+
+POWER MULTIPLIERS:
+The complete list of attacks in the entire game for all characters and opponents is extensive. Sora alone has hundreds of attacks, and each of his forms have their own as well. Because of this, the following list is far from complete, but it does include a number of Sora's most common attacks.
+Standard Form Physical Attacks:
+All of the following attacks are multiplied based on sora’s STR value unless otherwise specified. Attacks with an (*) in the Power Multiplier column are multiplied based on Sora’s MAGIC stat.
+Attack Name
+	Footing
+	Attack Type
+	Number of Opponents
+	Power Multiplier
+	Element
+	Vertical Slash
+	Ground to Ground
+	Close
+	Any
+	1.0
+	Physical
+	Horizontal Slash
+	Ground to Ground
+	Close
+	Group
+	0.66
+	Physical
+	Thrust (1st Hit)
+	Ground to Ground
+	Close
+	Any
+	0.66
+	Physical
+	Thrust (2nd Hit)
+	Ground to Ground
+	Close
+	Any
+	0.33
+	Physical
+	Vertical Finisher
+	Ground to Ground
+	Finisher
+	Single
+	2.0
+	Physical
+	Horizontal Finisher
+	Ground to Ground
+	Finisher
+	Group
+	1.5
+	Physical
+	Air Upper Slash
+	Air to Air
+	Close
+	Any
+	1.0
+	Physical
+	Air Downward Slash
+	Air to Air
+	Close
+	Any
+	1.0
+	Physical
+	Air Vertical Finisher
+	Air to Air
+	Finisher
+	Single
+	2.0
+	Physical
+	Air Horizontal Finisher
+	Air to Air
+	Finisher
+	Group
+	1.5
+	Physical
+	Slapshot
+	Ground to Ground
+	Close
+	Single
+	1.25
+	Physical
+	Dodge Slash (1st and 2nd hits)
+	Ground to Ground
+	Close
+	Any
+	0.25
+	Physical
+	Dodge Slash (3rd hit)
+	Ground to Ground
+	Close
+	Any
+	1.0
+	Physical
+	Vicinity Break
+	Ground to Ground
+	Close
+	Group
+	1.25
+	Light
+	Slide Dash (Both Hits)
+	Ground to Ground
+	Far
+	Any
+	0.5
+	Physical
+	Flash Step (1st hit)
+	Ground to Ground
+	Far
+	Any
+	0.5
+	Physical
+	Flash Step (2nd hit)
+	Ground to Ground
+	Far
+	Any
+	1.0
+	Physical
+	Aerial Sweep (All 3 hits)
+	Ground to Air
+	Close
+	Any
+	0.5
+	Physical
+	Aerial Dive (All 3 hits)
+	Ground to Air
+	Far
+	Any
+	0.5
+	Physical
+	Upper Slash
+	Ground to Air
+	Close
+	Any
+	1.0
+	Physical
+	Finishing Leap
+	Ground to Air
+	Finisher
+	Any
+	2.5
+	Light
+	Guard Break
+	Ground to Ground
+	Finisher
+	Single
+	2.5
+	Physical
+	Explosion (1st - 4th hits)
+	Ground to Ground
+	Finisher
+	Group
+	0.25*
+	Light
+	Explosion (5th and 6th hits)
+	Ground to Ground
+	Finisher
+	Group
+	1.5*
+	Light
+	Horizontal Slash (1st and 2nd hits)
+	Air to Air
+	Close
+	Any
+	0.25
+	Physical
+	Horizontal Slash (3rd hit)
+	Air to Air
+	Close
+	Any
+	1.0
+	Physical
+	Retaliating Slash (1st and 2nd hits)
+	Air to Air
+	Close
+	Any
+	0.25
+	Physical
+	Retaliating Slash (3rd hit)
+	Air to Air
+	Close
+	Any
+	1.0
+	Physical
+	Aerial Spiral (Both Hits)
+	Air to Air
+	Far
+	Any
+	0.5
+	Physical
+	Aerial Finish (1st - 3rd hits)
+	Air to Air
+	Finisher
+	Single
+	0.5
+	Physical
+	Aerial Finish (4th hit)
+	Air to Air
+	Finisher
+	Single
+	1.75
+	Physical
+	Magnet Burst (1st hit)
+	Air to Air
+	Finisher
+	Group
+	0.5*
+	Dark
+	Magnet Burst (2nd hit)
+	Air to Air
+	Finisher
+	Group
+	1.5*
+	Dark
+	Counterguard
+	Ground to Ground
+	Counter
+	Any
+	1.0
+	Light
+	Form Change
+	Any
+	Special
+	Any
+	2.0*
+	Light
+	
+
+
+
+
+
+
+
+Standard Form Magic:
+Magic Attack Name
+	Attack Type
+	Power Multiplier
+	Element
+	Fire (1st and 2nd hits)
+	Standard
+	0.5
+	Fire
+	Fire (3rd hit)
+	Standard
+	1.5
+	Fire
+	Fire Finisher (1st and 2nd hits)
+	Finisher
+	0.5
+	Fire
+	Fire Finisher (3rd hit)
+	Finisher
+	2.75
+	Fire
+	Fira (1st - 3rd hits)
+	Standard
+	0.5
+	Fire
+	Fira (4th hit)
+	Standard
+	1.5
+	Fire
+	Fira Finisher (1st - 3rd hits)
+	Finisher
+	0.5
+	Fire
+	Fira Finisher (4th hit)
+	Finisher
+	3.0
+	Fire
+	Firaga (1st - 4th hits)
+	Standard
+	0.5
+	Fire
+	Firaga (5th hit)
+	Standard
+	1.75
+	Fire
+	Firaga Finisher (1st - 4th hits)
+	Finisher
+	0.5
+	Fire
+	Firaga Finisher (5th hit)
+	Finisher
+	3.5
+	Fire
+	Blizzard
+	Standard
+	2.5
+	Ice
+	Blizzard Finisher
+	Finisher
+	3.75
+	Ice
+	Blizzara
+	Standard
+	3.0
+	Ice
+	Blizzara Finisher
+	Finisher
+	4.5
+	Ice
+	Blizzaga
+	Standard
+	3.75
+	Ice
+	Blizzaga Finisher
+	Finisher
+	5.5
+	Ice
+	Thunder
+	Standard
+	2.5
+	Lightning
+	Thunder Finisher
+	Finisher
+	3.75
+	Lightning
+	Thundara
+	Standard
+	3.0
+	Lightning
+	Thundara Finisher
+	Finisher
+	4.5
+	Lightning
+	Thundaga
+	Standard
+	3.75
+	Lightning
+	Thundaga Finisher
+	Finisher
+	5.5
+	Lightning
+	Cure (Target)
+	Special
+	4.0
+	N/A
+	Cure (Nearby Friends)
+	Special
+	2.0
+	N/A
+	Cura (Target)
+	Special
+	5.0
+	N/A
+	Cura (Nearby Friends)
+	Special
+	2.5
+	N/A
+	Curaga (Target)
+	Special
+	6.0
+	N/A
+	Curaga (Nearby Friends)
+	Special
+	3.0
+	N/A
+	Magnet (3.0 sec. duration)
+	Finisher
+	1.0
+	Dark
+	Magnera (3.4 sec. duration)
+	Finisher
+	1.0
+	Dark
+	Magnega (3.8 sec. duration)
+	Finisher
+	1.0
+	Dark
+	Reflect (1st - 3rd hits)
+	Standard
+	0.5
+	Light
+	Reflect (4th hit)
+	Standard
+	5.5
+	Light
+	Reflect Finisher (1st - 3rd hits)
+	Finisher
+	0.5
+	Light
+	Reflect Finisher (4th hit)
+	Finisher
+	5.5
+	Light
+	Reflera (1st - 4th hits)
+	Standard
+	0.5
+	Light
+	Reflera (5th hit)
+	Standard
+	5.5
+	Light
+	Reflera Finisher (1st - 4th hits)
+	Finisher
+	0.5
+	Light
+	Reflera Finisher (5th hit)
+	Finisher
+	5.5
+	Light
+	Reflega (1st - 5th hits)
+	Standard
+	0.5
+	Light
+	Reflega (6th hit)
+	Standard
+	5.5
+	Light
+	Reflega Finisher (1st - 5th hits)
+	Finisher
+	0.5
+	Light
+	Reflega Finisher (6th hit)
+	Finisher
+	5.5
+	Light
+	
+
+Limit Form Physical Attacks:
+Attack Name
+	Footing
+	Attack Type
+	Number of Opponents
+	Power Multiplier
+	Element
+	Vertical Slash
+	Ground to Ground
+	Close
+	Any
+	1.0
+	Physical
+	Horizontal Slash
+	Ground to Ground
+	Close
+	Group
+	0.66
+	Physical
+	Thrust (1st Hit)
+	Ground to Ground
+	Close
+	Any
+	0.66
+	Physical
+	Thrust (2nd Hit)
+	Ground to Ground
+	Close
+	Any
+	0.33
+	Physical
+	Air Upper Slash
+	Air to Air
+	Close
+	Any
+	1.0
+	Physical
+	Air Downward Slash
+	Air to Air
+	Close
+	Any
+	1.0
+	Physical
+	Slapshot
+	Ground to Ground
+	Close
+	Single
+	1.25
+	Physical
+	Slide Dash (Both Hits)
+	Ground to Ground
+	Far
+	Any
+	0.5
+	Physical
+	Aerial Sweep (All 3 hits)
+	Ground to Air
+	Close
+	Any
+	0.5
+	Physical
+	Zantetsuken
+	Ground to Ground
+	Finisher
+	Single
+	6.0
+	Physical
+	Ripple Drive
+	Ground to Ground
+	Finisher
+	Group
+	2.0*
+	Light
+	Hurricane Period (1st - 3rd hits)
+	Air to Air
+	Finisher
+	Any
+	0.5
+	Physical
+	Hurricane Period (4th hit)
+	Air to Air
+	Finisher
+	Any
+	1.5
+	Physical
+	
+
+Limit Form Limits:
+Attack Name
+	Footing
+	Attack Type
+	Number of Opponents
+	Power Multiplier
+	Element
+	Sonic Blade (1st - 6th hits)
+	Ground to Ground
+	Special
+	Any
+	1.5
+	Physical
+	Sonic Blade (7th hit)
+	Ground to Ground
+	Special
+	Any
+	3.0
+	Physical
+	Strike Raid (1st - 4th hits)
+	Any
+	Special
+	Any
+	2.0
+	Physical
+	Strike Raid (5th hit)
+	Any
+	Special
+	Any
+	5.0
+	Physical
+	Ars Arcanum (1st - 6th hits)
+	Ground to Ground
+	Special
+	Any
+	1.0
+	Physical
+	Ars Arcanum (7th - 12th hits)
+	Ground to Ground
+	Special
+	Any
+	1.5
+	Physical
+	Ars Arcanum (13th hit)
+	Ground to Ground
+	Special
+	Any
+	2.5
+	Physical
+	Ragnarok (1st - 4th hits)
+	Any
+	Special
+	Any
+	1.0
+	Physical
+	Ragnarok (5th hit)
+	Any
+	Special
+	Any
+	2.0
+	Physical
+	Ragnarok (Projectiles) (10, 17, or 25)
+	Any
+	Special
+	Any
+	0.66*
+	Light
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Special Abilities:
+There are a few abilities within KH2 that directly modify the previously discussed sections in different ways. One of the most well known, and most useful, of these unique abilities is the Combo Boost and Air Combo Boost abilities. Sora can learn both of these abilities naturally through leveling up, but he can also add an additional one of them by equipping Keyblades that have the abilities. 
+Hero's Crest - Air Combo Boost
+Decisive Pumpkin - Combo Boost
+Decisive Pumpkin is generally considered the best Keyblade in the game, and when you understand the mechanics of the Combo Boost ability, the reason becomes clear.
+The game describes the ability in the following way: "Increases the damage of your finishing move relative to the number of hits in the combo." This means, when the ability is equipped, the finishing hit in your combo will be given a boost in strength relative to the number of non-finishing hits there have been in your combo thus far. The ability follows this formula:
+
+In this formula, 'n' is the position within the combo that your first finishing move lies (1st hit, 2nd hit, 3rd hit, ect...). The position is then multiplied by 0.1 and added to a flat value of 1, resulting in a number that directly multiplies the power of the finishing hit.
+For example, let's say you have a standard 3 hit combo (2 regular hits and 1 finishing hit). The ability looks at the position in which your first finishing hit falls in the combo, in this case, it's the 3rd hit. The value of 'n' is set at 3, resulting in a final value of 1.3 using the formula (1 + (0.1 x 3) = 1.3). This will then multiply the power value of your finishing hit by a factor of 1.3. So if you had the 'Guard Break' ability equipped as your finishing move, that ability's PM value of 2.5 will be multiplied by 1.3, giving a new PM of 3.25.
+If you have a combo with 4 standard hits and 2 finishing hits, each finishing hit in your combo will be multiplied by 1.5. Note that successive finishing moves do not increase the count, only regular hits.
+With the Combo Boost ability AND the Decisive Pumpkin Keyblade equipped, the boost is doubled, meaning the formula changes to: 
+
+This can result in incredibly powerful finishing moves, multiplying their damage by 2.0 if you have 4 standard hits in your combo. For some perspective, having Sora at max STR (80+) and having 2 Combo Boost abilities equipped, Limit Form's finisher Zantetsuken can take off 348 HP from a lv99 opponent such as one of the Org Data Battles, or the Lingering Will. This is almost 2 full HP bars.
+
+
+
+
+
+
+
+
+
+
+Ability Guide:
+Level-Up Abilities:
+ 
+Level         Sword                                       Shield                                        Rod
+ 
+7                  Combo Boost                         Item Boost                              Experience Boost
+9                  Experience Boost                 Combo Boost                         Item Boost
+12               Magic Lock-On                      Magic Lock-On                      Magic Lock-On
+15               Reaction Boost                      Damage Drive                        Fire Boost
+17               Item Boost                              Experience Boost                 Combo Boost
+20               Leaf Bracer                             Leaf Bracer                             Leaf Bracer
+23               Fire Boost                                Reaction Boost                      Damage Drive
+25               Drive Boost                             Once More                             Draw 1
+28               Draw 1                              Drive Boost                             Once More
+31               Combination Boost             Defender                                Blizzard Boost
+33               Damage Drive                        Fire Boost                                Reaction Boost
+36               Air Combo Boost                  Jackpot                             Negative Combo
+39               Blizzard Boost                        Combination Boost             Defender
+41               Drive Converter                    Damage Control                   Thunder Boost
+44               Negative Combo                  Air Combo Boost                  Jackpot
+47               Once More                             Draw 1                              Drive Boost
+49               Finishing Plus                         Second Chance                     Berserk Charge
+53               Thunder Boost                      Drive Converter                    Damage Control
+59               Defender                                Blizzard Boost                        Combination Boost
+65               Berserk Charge                     Finishing Plus                         Second Chance
+73               Jackpot                             Negative Combo                 Air Combo Boost
+85               Second Chance                     Berserk Charge                     Finishing Plus
+99               Damage Control                   Thunder Boost                      Drive Converter
+ 
+Special Event Abilities:
+ 
+Station of Serenity              Aerial Recovery
+Twilight Thorn                       Guard
+Axel 1                                Scan
+Village Cave                            Sliding Dash
+Shan-Yu                                   Aerial Sweep
+Thresholder & Poss.           Upper Slash
+Dark Thorn                              Retaliating Slash
+Cerberus                                 Counterguard
+Phil's Training                         Aerial Dive
+Pete 1                                       Trinity Limit
+Escort Minnie                        Auto Summon
+Pete's Steamboat                Dodge Slash
+Barbossa                                  Aerial Finish
+Volcanic & Bliz Lord             Finishing Leap
+Stone Guardians                  Summon Boost
+Prison Keeper                       Flash Step
+Hostile Program                    Vicinity Break
+1000 Heartless                       Guard Break
+Recover Medallion              Aerial Spiral
+Grim Reaper 1                       Horizontal Slash
+Hades                                       Magnet Break
+Solar Sailer                              Explosion
+Betwixt and Between        Slapshot
+Roxas                                        Combo Master
+ 
+Drive Earned Abilities:
+
+
+Valor Lv2                                  Auto Valor
+Valor Lv3                                  High Jump Lv1
+Valor Lv4                                  Combo Plus 1
+Valor Lv5                                  High Jump Lv2
+Valor Lv6                                  Combo Plus 2
+Valor Lv7                                  High Jump Lv3
+Wisdom Lv2                            Auto Wisdom
+Wisdom Lv3                            Quick Dash Lv1
+Wisdom Lv4                            MP Rage
+Wisdom Lv5                            Quick Dash Lv2
+Wisdom Lv6                            MP Haste
+Wisdom Lv7                            Quick Dash Lv3
+Limit Lv2                           Auto Limit
+Limit Lv3                           Dodge Roll Lv1
+Limit Lv4                           Draw 2
+Limit Lv5                           Dodge Roll Lv2
+Limit Lv6                           Lucky Lucky
+Limit Lv7                           Dodge Roll Lv3
+Master Lv2                              Auto Master
+Master Lv3                              Aerial Dodge Lv1
+Master Lv4                              Air Combo Plus 1
+Master Lv5                              Aerial Dodge Lv2
+Master Lv6                              Air Combo Plus 2
+Master Lv7                              Aerial Dodge Lv3
+Final Lv2                                   Auto Final
+Final Lv3                                   Glide Lv1
+Final Lv4                                   Form Boost 1
+Final Lv5                                   Glide Lv2
+Final Lv6                                   Form Boost 2
+Final Lv7                                   Glide Lv3

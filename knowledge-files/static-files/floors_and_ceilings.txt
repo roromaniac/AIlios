@@ -1,0 +1,641 @@
+KH2FM Damage Floors and Caps
+
+
+I made these tables because the information given in the KINGDOM HEARTS II FINAL MIX - GAME MECHANICS GUIDE is not 100% accurate. The section that explains the damage formula states that the minimum value of strength (or magic) minus defense is 8 whenever Sora is attacking an enemy. However, the minimum value of this calculation is actually dependent on what enemy Sora is attacking, and the battle level of the area. This means that the technique of just adding 8 to the defense value of a battle level to determine the damage floor (which I have done for some time) does not work. These tables should give the damage floor and cap for most of the areas of the game, calculated using the battle level defense values and HP multipliers (found in the above guide) along with the base HP and max/min damage values for each enemy from this table of enemy stats by Num.
+
+
+To interpret the information in the below tables, the number given for a damage floor is the largest amount of strength or magic Sora can have that will still do the minimum amount of damage to that enemy. For example, if the damage floor is 10, then any strength/magic stat up to and including 10 will result in Sora doing the minimum damage possible to that enemy for any attack using that stat. To start doing more than the minimum amount of damage in this case, Sora would need at least 11 points in the relevant stat. On the other hand, the number given for a damage cap is the smallest amount of strength or magic Sora can have that will do the maximum amount of damage to that enemy. For example, if the damage cap is 20, then a strength/magic stat of 20 or higher will result in Sora doing the maximum damage possible to that enemy for any attack using that stat.
+
+
+For the ‘mobs’ sections in the below tables, since the damage floor and cap numbers depend on the specific enemy Sora is attacking, I have often put a range of values in these rows. The smallest number in this range is the lowest damage floor/cap number for all the non-boss enemies in the forced fights in that area, and the largest number in this range is the largest damage floor/cap number for all the non-boss enemies in the forced fights in that area.
+
+
+Simulated Twilight Town
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Mobs
+
+4-5
+
+18-22
+
+Seifer (day 1 tutorial)
+
+3
+
+62
+
+Twilight Thorn
+
+4
+
+8
+
+Hayner
+
+3
+
+212
+
+Vivi
+
+3
+
+107
+
+Axel 1
+
+4
+
+9
+
+Setzer
+
+3
+
+107
+
+Axel 2
+
+5
+
+10
+
+
+Twilight Town
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Mobs (first visit)
+
+6-7
+
+18-34
+
+Mobs (second visit)
+
+19
+
+55-67
+
+Mobs (third visit)
+
+30
+
+101-120
+
+
+Hollow Bastion
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Mobs (first visit)
+
+7
+
+30
+
+Mobs (second visit)
+
+19
+
+47-79
+
+Demyx
+
+19
+
+28
+
+
+Cavern of Remembrance
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Mobs (first fight)
+
+23
+
+67-95
+
+Valves
+
+23
+
+35
+
+Mobs (second fight)
+
+35
+
+117-138
+
+Mobs (transport)
+
+47
+
+138-181
+
+
+Land of Dragons
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Mobs (first visit)
+
+8
+
+23-40
+
+Shan Yu
+
+8
+
+17
+
+Mobs (second visit)
+
+23
+
+57-85
+
+Riku
+
+23
+
+35
+
+Storm Rider
+
+23
+
+35
+
+
+Beast’s Castle
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Mobs (first visit)
+
+10
+
+28-40
+
+Thresholder/Possessor
+
+10
+
+20
+
+Beast
+
+10
+
+164
+
+Shadow Stalker/Dark Thorn
+
+10
+
+20
+
+Mobs (second visit)
+
+23
+
+81
+
+Xaldin
+
+23
+
+35
+
+
+Olympus Coliseum
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Mobs (first visit)
+
+12
+
+31-45
+
+Cerberus/Pete/Hydra
+
+12
+
+23
+
+Mobs (second visit)
+
+25
+
+71-101
+
+Hades
+
+25
+
+37
+
+
+Disney Castle
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Mobs
+
+13-14
+
+34-60
+
+Old/Boat/Future Petes
+
+14
+
+26
+
+
+Port Royal
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Mobs (first visit)
+
+14
+
+37-62
+
+Barbossa
+
+14
+
+24
+
+Mobs (second visit)
+
+24
+
+70-84
+
+Grim Reaper 1/2
+
+24
+
+36
+
+
+Agrabah
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Mobs (first visit)
+
+15
+
+39-66
+
+Volcanic/Blizzard Lord
+
+15
+
+26
+
+Mobs (second visit)
+
+26
+
+63-105
+
+Genie Jafar
+
+26
+
+38
+
+
+Halloween Town
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Mobs (first visit)
+
+16
+
+49-70
+
+Prison Keeper/Oogie Boogie
+
+16
+
+28
+
+Mobs (second visit)
+
+27
+
+76-108
+
+Lock/Shock/Barrel
+
+27
+
+40
+
+The Experiment
+
+27
+
+40
+
+
+Pride Lands
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Mobs (first visit)
+
+18
+
+53
+
+Hyenas 1/Scar
+
+18
+
+30
+
+Hyenas 2
+
+28
+
+46
+
+Groundshaker
+
+28
+
+41
+
+
+Space Paranoids
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Mobs (first visit)
+
+19
+
+79
+
+Hostile Program
+
+19
+
+28
+
+Mobs (second visit)
+
+29
+
+82-116
+
+Sark/MCP
+
+29
+
+38
+
+
+The World That Never Was
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Roxas
+
+32
+
+47
+
+Xigbar/Luxord
+
+32
+
+41
+
+Luxord’s Cards
+
+31
+
+76
+
+Saix/Xemnas 1
+
+32
+
+41
+
+Mobs (final fights)
+
+31-32
+
+89-126
+
+Armored Xemnas 1/2
+
+31
+
+89
+
+Final Xemnas
+
+32
+
+41
+
+
+Superbosses
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+AS Zexion
+
+17
+
+23
+
+AS Larxene
+
+21
+
+28
+
+AS Lexaeus
+
+26
+
+34
+
+AS Vexen
+
+32
+
+41
+
+AS Marluxia/Sephiroth
+
+49
+
+64
+
+Data Xemnas/Axel/Xaldin/
+
+Saix/Marluxia/Lexaeus/Terra
+
+60
+
+78
+
+Data Roxas
+
+60
+
+79
+
+Data Zexion/Larxene/Vexen/
+
+Demyx/Luxord
+
+61
+
+79
+
+Data Xigbar
+
+61
+
+82
+
+
+Cups
+
+Enemy
+
+Damage Floor
+
+Damage Cap
+
+Mobs (Pain and Panic)
+
+17
+
+44-73
+
+Leon and Yuffie
+
+17
+
+51
+
+Mobs (Cerberus)
+
+20
+
+50-83
+
+Cerberus
+
+20
+
+58
+
+Mobs (Titan)
+
+29
+
+82-116
+
+Hercules
+
+29
+
+82
+
+Mobs (Goddess of Fate)
+
+35
+
+84-138
+
+Hades
+
+35
+
+98
+
+
+No, I didn't bother doing the paradox cups.
