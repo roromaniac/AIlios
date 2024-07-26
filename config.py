@@ -7,16 +7,15 @@ CONVERSATION_FILE = "conversation_logging.json"
 DATE_FORMAT = "%Y-%m-%d"
 DEFAULT_LANGUAGE = "en"
 DYNAMIC_CHANNEL_IDS = {
-    "help": {"id": 721205500556869642, "batch_by_date": True},
-    "openkh-gameplay-mods": {"id": 975234023926399027, "batch_by_date": False},
-    "openkh-visual-mods": {"id": 975232621288247346, "batch_by_date": False},
-    "openkh-audio-mods": {"id": 975233883157188618, "batch_by_date": False},
-    "other-mods": {"id": 986283734321987665, "batch_by_date": False},
-    "lua-scripts": {"id": 893409929992495104, "batch_by_date": False},
-    "tracker-discussion": {"id": 737657166902591649, "batch_by_date": True},
-    "generator-discussion": {"id": 1086478482046996652, "batch_by_date": True},
-    "tourney-announcements": {"id": 849861480853798942, "batch_by_date": False},
-    "tournament-hub": {"id": 1195222715381059635, "batch_by_date": False}
+    "announcements": {"id": 712837747685195902, "batch_by_date": False},
+    # "help": {"id": 721205500556869642, "batch_by_date": True},
+    # "openkh-gameplay-mods": {"id": 975234023926399027, "batch_by_date": False},
+    # "openkh-visual-mods": {"id": 975232621288247346, "batch_by_date": False},
+    # "openkh-audio-mods": {"id": 975233883157188618, "batch_by_date": False},
+    # "other-mods": {"id": 986283734321987665, "batch_by_date": False},
+    # "lua-scripts": {"id": 893409929992495104, "batch_by_date": False},
+    # "tracker-discussion": {"id": 737657166902591649, "batch_by_date": True},
+    # "generator-discussion": {"id": 1086478482046996652, "batch_by_date": True},
 }
 HELP_COMMAND = "/randohelp"
 IMAGE_COST_IN_DOLLARS = 0.001275

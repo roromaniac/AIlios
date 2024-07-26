@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
+import discord
 
 from config import DATE_FORMAT, DYNAMIC_CHANNEL_IDS
 
@@ -53,8 +54,9 @@ def strip_help_messages(knowledge_filepath, date_filename):
         with open(os.path.join(knowledge_filepath, date_filename), "w", encoding="utf-8") as file:
             json.dump(data, file)
 
-commands = []
 for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
+
+    command_list = []
     channel_id, batch_channel_by_date = channel_info["id"], channel_info["batch_by_date"]
     current_knowledge_filepath = os.path.join(DYNAMIC_FILES_DIR, channel_name)
     if batch_channel_by_date:
@@ -62,7 +64,7 @@ for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
             date_filename = f"{channel_name}-{datetime.strptime(before_date, DATE_FORMAT).strftime('%B_%Y')}.json"
             output_file = os.path.join(current_knowledge_filepath, date_filename)
             media_dir = os.path.join(current_knowledge_filepath, f"{date_filename.replace(".json", "")} MEDIA")
-            commands.append([
+            command_list.append([
                 "DiscordChatExporter.Cli.exe", "export", "-t", os.getenv("DISCORD_SCRAPER_TOKEN"), 
                 "-c", f"{channel_id}", "-f", "Json", "-o", output_file, 
                 "--media", "--reuse-media", "--media-dir", media_dir, 
@@ -71,17 +73,24 @@ for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
     else:
         output_file = os.path.join(current_knowledge_filepath, f"{channel_name}.json")
         media_dir = os.path.join(current_knowledge_filepath, f"{channel_name} MEDIA")
-        commands.append([
-            "DiscordChatExporter.Cli.exe", "export", "-t", os.getenv("DISCORD_SCRAPER_TOKEN"), 
-            "-c", f"{channel_id}", "-f", "Json", "-o", output_file, 
-            "--media", "--reuse-media", "--media-dir", media_dir
-        ])
+        if channel_name == "tournament-hub":
+            command_list.append([
+                "DiscordChatExporter.Cli.exe", "export", "-t", os.getenv("DISCORD_SCRAPER_TOKEN"), 
+                "-c", f"{channel_id}", "-f", "Json", "-o", output_file, 
+                "--media", "--reuse-media", "--media-dir", media_dir, "--include-threads", "active"
+            ])
+        else:
+            command_list.append([
+                "DiscordChatExporter.Cli.exe", "export", "-t", os.getenv("DISCORD_SCRAPER_TOKEN"), 
+                "-c", f"{channel_id}", "-f", "Json", "-o", output_file, 
+                "--media", "--reuse-media", "--media-dir", media_dir
+            ])
 
 def run_command(command):
     subprocess.run(command, shell=True, cwd=os.path.join(BASE_DIR, "DiscordChatExporter.Cli"))
 
 with ThreadPoolExecutor(max_workers=12) as executor:
-    executor.map(run_command, commands)
+    executor.map(run_command, command_list)
 
 for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
     channel_id, batch_channel_by_date = channel_info["id"], channel_info["batch_by_date"]
