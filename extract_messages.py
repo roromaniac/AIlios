@@ -1,5 +1,7 @@
-# You will need to download the DiscordChatExporter.Cli in order to extract the messages from the Discord server.
-# You can download it from https://github.com/Tyrrrz/DiscordChatExporter/releases
+"""
+You will need to download the DiscordChatExporter.Cli in order to extract the messages from the Discord server.
+You can download it from https://github.com/Tyrrrz/DiscordChatExporter/releases
+"""
 
 import json
 import os
@@ -25,8 +27,27 @@ current_date = datetime.now()
 dates = [(current_date - relativedelta(months=i)).replace(day=1) - relativedelta(days=1) for i in range(12, -1, -1)]
 dates = [date.strftime(DATE_FORMAT) for date in dates]
 
-def strip_help_messages(knowledge_filepath, date_filename):
-    current_filepath = os.path.join(knowledge_filepath, date_filename)
+def run_command(command):
+    """
+        Runs a terminal command to start Discord Chat Exporting.
+
+        Args:
+            command: The terminal command to be run.
+    """
+    subprocess.run(command, shell=True, cwd=os.path.join(BASE_DIR, "DiscordChatExporter.Cli"), check=True)
+
+def strip_discord_messages(knowledge_filepath, dated_filename):
+    """
+        Strips the relevant content from the messages within a discord channel. 
+
+        Args:
+            knowledge_filepath: The filepath of where the relevant knowledge files are located (usually dynamic files).
+            dated_filename: The filename for the information in question. May be dated.
+
+        Outputs:
+            Stripped discord messages pertaining to the relevant files in question.
+    """
+    current_filepath = os.path.join(knowledge_filepath, dated_filename)
     if os.path.exists(current_filepath):
         with open(current_filepath, "r", encoding="utf-8") as file:
             if os.path.getsize(current_filepath) > 0:  # Check if the file has non-null content
@@ -51,7 +72,7 @@ def strip_help_messages(knowledge_filepath, date_filename):
                 if isinstance(message["author"]["roles"], list):
                     if len(message["author"]["roles"]) > 0 and isinstance(message["author"]["roles"][0], dict):
                         message["author"]["roles"] = [role["name"] for role in message["author"]["roles"]]
-        with open(os.path.join(knowledge_filepath, date_filename), "w", encoding="utf-8") as file:
+        with open(os.path.join(knowledge_filepath, dated_filename), "w", encoding="utf-8") as file:
             json.dump(data, file)
 
 for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
@@ -86,9 +107,6 @@ for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
                 "--media", "--reuse-media", "--media-dir", media_dir
             ])
 
-def run_command(command):
-    subprocess.run(command, shell=True, cwd=os.path.join(BASE_DIR, "DiscordChatExporter.Cli"))
-
 with ThreadPoolExecutor(max_workers=12) as executor:
     executor.map(run_command, command_list)
 
@@ -98,7 +116,7 @@ for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
     if batch_channel_by_date:
         for after_date, before_date in zip(dates, dates[1:]):
             date_filename = f"{channel_name}-{datetime.strptime(before_date, DATE_FORMAT).strftime('%B_%Y')}.json"
-            strip_help_messages(current_knowledge_filepath, date_filename)
+            strip_discord_messages(current_knowledge_filepath, date_filename)
     else:
         date_filename = f"{channel_name}.json"
-        strip_help_messages(current_knowledge_filepath, date_filename) 
+        strip_discord_messages(current_knowledge_filepath, date_filename) 
