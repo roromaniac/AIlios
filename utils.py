@@ -281,7 +281,7 @@ def message_has_thread(discord_message):
             return True
     return False
 
-async def populate_openai_assistant_content(openai_client, discord_message, discord_thread, discord_message_contents):
+async def populate_OPENAI_ASSISTANT_ID_content(openai_client, discord_message, discord_thread, discord_message_contents):
     """
         Creates jsons of text and image data to send to OpenAI assistant.
 

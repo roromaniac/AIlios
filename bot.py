@@ -88,7 +88,7 @@ async def on_message(discord_message):
             )
 
             # create text and image content to send to assistant
-            text_content, image_content = await populate_openai_assistant_content(openai_client, discord_message, discord_thread, text)
+            text_content, image_content = await populate_OPENAI_ASSISTANT_ID_content(openai_client, discord_message, discord_thread, text)
             _ = openai_client.beta.threads.messages.create(
                 thread_id=openai_thread.id,
                 role="user",
@@ -98,7 +98,7 @@ async def on_message(discord_message):
             # attempt to extract response
             run = openai_client.beta.threads.runs.create_and_poll(
                 thread_id=openai_thread.id,
-                assistant_id=OPENAI_ASSISTANT,
+                assistant_id=OPENAI_ASSISTANT_ID,
                 max_completion_tokens=MAX_COMPLETION_TOKENS,
             )
 
