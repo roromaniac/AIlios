@@ -4,6 +4,7 @@ import json
 ATTACHMENT_EXTENSIONS = ['.jpg','.png','.jpeg']
 CHANNEL_NAME = "ailios"
 CONVERSATION_FILE = "conversation_logging.json"
+CORRECTION_COMMAND = "/correct"
 DATE_FORMAT = "%Y-%m-%d"
 DEFAULT_LANGUAGE = "en"
 DYNAMIC_CHANNEL_IDS = {
@@ -33,5 +34,5 @@ OPENAI_ASSISTANT_ID = 'asst_soKOR1ZJHiAIzWz3AE7h0LwC'
 OPENAI_VECTOR_STORE_ID = 'vs_D3p8uQk6xApU4OFc3yC2yXE7'
 with open("openai_pricing.json", "r", encoding="utf-8") as f:
     OPENAI_PRICING = json.load(f)
-REVIEW_COMMAND = "/review"
+REVIEW_COMMAND = "/rate"
 STORAGE_SPACE = 10.0 # in GiB

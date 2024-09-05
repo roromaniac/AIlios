@@ -430,6 +430,37 @@ async def storage_check(discord_client):
 
 async def submit_review(discord_thread, discord_message, conversations_logs):
     """
+        Submits the potential instructions to fix the error in the outputted response.
+
+        Args:
+            discord_thread (discord.Thread): The discord thread for discord to send message to.
+            discord_message (discord.Message): The current message object. Used to see if the reviewer is the original author.
+            conversations_logs (dict): The conversation logging dictionary used to update the rating of this thread.
+
+        Outputs:
+            A message indicating whether the review was successfully submitted or not.
+
+        Returns:
+            conversations_logs (dict): The updated conversation logs.
+    """
+
+    text = discord_message.content.removeprefix(CORRECTION_COMMAND + " ")
+
+    if is_discord_thread(discord_message, discord_thread):
+        discord_thread = discord_message.channel
+        first_thread_message = conversations_logs[discord_thread.id]["message_log"][0]["content"]
+        text_language = detect_message_language(first_thread_message)
+        try:
+            correction_instruction = str(text)
+            conversations_logs[discord_thread.id]["correction information"] = correction_instruction
+            await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(CORRECTION_SUCCESS_MESSAGE))
+        except ValueError:
+            await discord_thread.send(GoogleTranslator(source='auto', target=text_language).translate(CORRECTION_FAILURE_MESSAGE))
+
+    return conversations_logs
+
+async def submit_review(discord_thread, discord_message, conversations_logs):
+    """
         Submits the review to logs and responds with the appropriate discord messages.
 
         Args:

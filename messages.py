@@ -5,6 +5,8 @@
 from config import *
 
 BOT_ERROR_MESSAGE = 'The Ailios bot could not process the response. Please try again. I have pinged <@611722032198975511> informing him of the incident.'
+CORRECTION_SUCCESS_MESSAGE = 'Thank you for your input on how to correct this response! I will try to use this information for future responses.'
+CORRECTION_FAILURE_MESSAGE = 'I was unable to properly log your suggestion for improving this response. Please try again.'
 EXISTING_THREAD_HEADER = 'Trying to generate a helpful response...'
 IMAGE_TOO_LARGE_MESSAGE = "The image %s was too large and therefore not considered by AI-lios. If you wish to include it, please reduce it's size to under 512x512."
 MAX_ATTACHMENTS_MESSAGE = f"Currently, AI-lios only supports {MAX_ATTACHMENTS_ALLOWED} attachments to bot queries. Only {MAX_ATTACHMENTS_ALLOWED} will be processed. To ensure your entire inquiry is process, please stay within the attachment limit."

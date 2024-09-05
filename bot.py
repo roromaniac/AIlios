@@ -151,8 +151,25 @@ async def on_message(discord_message):
             await discord_thread.send(BOT_ERROR_MESSAGE)
             logging.exception("ERROR OCCURRED")
 
+    
+    elif discord_message.content.startswith(CORRECTION_COMMAND):
+
+        openai_client = OpenAI()
+        discord_thread, existing_thread = await get_discord_thread(openai_client, discord_message, discord_thread_name=THREAD_TITLE_ERROR_MESSAGE)
+        # store the review or send an error message that review can't be done
+        try:
+            conversations_logs = await submit_correction(discord_thread, discord_message, conversations_logs)
+
+        except Exception:
+            # communicate to user that there is a fatal error
+            await discord_thread.send(BOT_ERROR_MESSAGE)
+            logging.exception("ERROR OCCURRED")
+
     # save the conversation logs
     with open(CONVERSATION_FILE, 'w', encoding='utf-8') as logs:
         json.dump(conversations_logs, logs, indent=4)
+
+
+
 
 discord_client.run(os.getenv("DISCORD_TOKEN"))
