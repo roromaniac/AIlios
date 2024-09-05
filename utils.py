@@ -428,7 +428,7 @@ async def storage_check(discord_client):
         if user:
             await user.send("Less than 20% of storage space remains!!!!! Back up logs and conversations.")
 
-async def submit_review(discord_thread, discord_message, conversations_logs):
+async def submit_correction(discord_thread, discord_message, conversations_logs):
     """
         Submits the potential instructions to fix the error in the outputted response.
 

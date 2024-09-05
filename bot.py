@@ -75,7 +75,7 @@ async def on_message(discord_message):
                 return
 
             discord_thread, existing_thread = await get_discord_thread(openai_client, discord_message, message_content=text)
-            await send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language)
+            await send_initial_discord_response(discord_thread, discord_message, text_language)
             conversations_logs = log_conversation(conversations_logs, discord_message, discord_thread, text_language, "user", text, existing_thread)
 
             if thread_message_counts(conversations_logs, discord_thread) > MAX_MESSAGES_ALLOWED_IN_THREAD:
