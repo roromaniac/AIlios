@@ -8,6 +8,7 @@ import logging
 import io
 import re
 
+import datetime as dt
 import tempfile
 import requests
 import aiohttp
@@ -226,6 +227,26 @@ def is_discord_thread(discord_message, discord_thread=None):
             discord_thread (discord.Thread or None): the possible discord thread being checked, will be None if a thread has not yet been created
     """
     return isinstance(discord_message.channel, discord.Thread) or message_has_thread(discord_message) or isinstance(discord_thread, discord.Thread)
+
+def knowledge_file_needs_update():
+    """
+    Checks if the knowledge file needs to be updated based on the last update date.
+
+    Returns:
+        bool: True if the knowledge file needs to be updated, False otherwise.
+    """
+    load_dotenv()  # Ensure environment variables are loaded
+    last_update = os.getenv('LAST_KNOWLEDGE_FILE_UPDATE')
+    if not last_update:
+        return True  # If no last update date is set, assume update is needed
+
+    try:
+        last_update_date = dt.datetime.strptime(last_update, '%m-%d-%Y')
+        today = dt.datetime.today()
+        return last_update_date.month != today.month
+    except ValueError:
+        logging.error("Invalid date format in LAST_KNOWLEDGE_FILE_UPDATE")
+        return True  # If there's an error parsing the date, assume update is needed
 
 def log_conversation(conversations_logs, discord_message, discord_thread, text_language, role, current_message, existing_thread):
     """

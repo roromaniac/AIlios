@@ -81,6 +81,7 @@ def delete_excess_media(media_dir):
     for file in emotes_and_profiles:
         os.remove(os.path.join(media_dir, file))
 
+
 command_list = []
 for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
 

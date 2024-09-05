@@ -6,9 +6,11 @@ import os
 import json
 import logging
 import asyncio
+import subprocess
+import datetime as dt
 
 import discord
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key
 
 import openai
 from openai import OpenAI
@@ -50,6 +52,26 @@ async def on_message(discord_message):
     conversations_logs = setup_conversation_logs()
 
     if discord_message.content.startswith(HELP_COMMAND):
+
+        if knowledge_file_needs_update():
+            await discord_message.channel.send(KNOWLEDGE_UPDATED_NEEDED_MESSAGE)
+            try:
+                # # Run gpt-crawler on kh2rando.com
+                # try:
+                #     subprocess.run(["npm", "run", "start"], cwd="./gpt-crawler", check=True)
+                #     print("GPT Crawler completed successfully.")
+                # except subprocess.CalledProcessError as e:
+                #     print(f"Error running GPT Crawler: {e}")
+                #     await discord_message.channel.send("There was an error updating the knowledge base. <@611722032198975511> has been notified.")
+                #     return
+                subprocess.run(["python", "extract_messages.py"], check=True)
+                subprocess.run(["python", "refresh_knowledge_files.py"], check=True)
+                set_key('.env', 'LAST_KNOWLEDGE_FILE_UPDATE', dt.datetime.today().strftime('%m-%d-%Y'))
+            except subprocess.CalledProcessError as e:
+                print(f"Error refreshing knowledge files: {e}")
+                await discord_message.channel.send(KNOWLEDGE_UPDATE_FAILED_MESSAGE)
+
+            return
 
         discord_thread = None
         openai_client = OpenAI()

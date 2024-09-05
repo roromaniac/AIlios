@@ -1,0 +1,116 @@
+Category / Discord Channel Name
+
+Help and Information Channels / faq
+Help and Information Channels / rules
+Help and Information Channels / announcements
+Help and Information Channels / channels
+Help and Information Channels / help
+Help and Information Channels / help-vc
+Help and Information Channels / pc-rando-updates
+Help and Information Channels / ps2-rando-updates
+BUG REPORTS / archipelago-bugs
+BUG REPORTS / boss-enemy-rando-bugs
+BUG REPORTS / pc-epic-bugs
+BUG REPORTS / pc-steam-bugs
+BUG REPORTS / ps2-emulator-bugs
+BUG REPORTS / seed-generator-bugs
+Mod Chats / admin-chat
+Mod Chats / all-mods
+Mod Chats / chat-to-mods
+Mod Chats / league-organizers
+Mod Chats / mee6-audit-log
+Mod Chats / Mod Chat
+Mod Chats / mod-announcements
+Mod Chats / mod-vc
+Mod Chats / moderator-only
+Resources / archived-resources
+Resources / generator-discussion
+Resources / misc-resources
+Resources / music-rando
+Resources / other-rando-related-servers
+Resources / setup-guides
+Resources / tracker-discussion
+Resources / trackers-and-hint-systems
+Resources / tutorials
+MODS AND SCRIPTS / lua-scripts
+MODS AND SCRIPTS / quality-of-life-pnaches
+MODS AND SCRIPTS / core-dev
+MODS AND SCRIPTS / dev-contributors
+MODS AND SCRIPTS / mod-discussion
+MODS AND SCRIPTS / openkh-audio-mods
+MODS AND SCRIPTS / openkh-essential-mods
+MODS AND SCRIPTS / openkh-gameplay-mods
+MODS AND SCRIPTS / openkh-visual-mods
+MODS AND SCRIPTS / other-mods
+Daily Seeds / daily-seed-spoiler-discussion
+Daily Seeds / daily-seeds-information
+Casual Channels / plando-spoilers
+Casual Channels / archipelago-discussion
+Casual Channels / async-seeds
+Casual Channels / betwixt-and-between
+Casual Channels / data-memes
+Casual Channels / general
+Casual Channels / looking-to-game
+Casual Channels / looking-to-race
+Casual Channels / lore-discussions
+Casual Channels / plandos
+Casual Channels / play-by-play
+Casual Channels / seeds-go-here
+Casual Channels / self-advertisement
+Casual Channels / voice-text
+Casual Voice Channels / AFK
+Casual Voice Channels / General (Uncapped)
+Casual Voice Channels / Small General
+Race Voice Channels / Big Race
+Race Voice Channels / Medium Race 1
+Race Voice Channels / Medium Race 2
+Race Voice Channels / Race (Uncapped)
+Race Voice Channels / Race 1
+Race Voice Channels / Race 2
+Race Voice Channels / race-vc
+Race Voice Channels / Small Race 1
+Race Voice Channels / Small Race 2
+Co-Op Voice Channels / Co-op 1
+Co-Op Voice Channels / Co-op 2
+Co-Op Voice Channels / Small Co-op 1
+Co-Op Voice Channels / Small Co-op 2
+Tournaments / tournament-schedule
+Tournaments / tournament-hub
+Tournaments / tournament-ping-opt-in
+Tournaments / tourney-announcements
+Tournaments / tourney-discussions
+Tournaments / tourney-org-talk
+Tournaments / tourney-race-streams
+Tournaments / tourney-seeds
+League Channels / league-race-streams
+League Channels / cat-pics-please
+League Channels / League Mods VC
+League Channels / League Race 1
+League Channels / League Race 2
+League Channels / League Race 3
+League Channels / League Race 4
+League Channels / League Race Commentary
+League Channels / League Race Commentary 2
+League Channels / League Race Lobby
+League Channels / League Viewing Room
+League Channels / league-chat
+League Channels / league-commentators
+League Channels / league-mod-vc-aka-the-key-and-raisin-channel
+League Channels / league-mods
+League Channels / league-questions
+League Channels / league-seeds
+League Channels / league-sign-ups
+League Channels / league-updates
+League Channels / looking-for-teammate
+League Channels / seed-archive-spring-2022
+League Channels / seed-archive-spring-2023
+League Channels / seeds
+Archived - Community Event: Art Contest / voting
+Archived - Community Event: Art Contest / discussion
+Archived - Community Event: Art Contest / discussion
+Archived - Community Event: Art Contest / explanation-and-rules
+Archived - Community Event: Art Contest / standings
+Archived - Community Event: Art Contest / submissions
+Archived - Community Event: Art Contest / submissions
+ARCHIVED CHANNELS / visual-patches
+ARCHIVED CHANNELS / archived-visual-patches
