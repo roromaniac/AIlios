@@ -191,7 +191,4 @@ async def on_message(discord_message):
     with open(CONVERSATION_FILE, 'w', encoding='utf-8') as logs:
         json.dump(conversations_logs, logs, indent=4)
 
-
-
-
 discord_client.run(os.getenv("DISCORD_TOKEN"))
