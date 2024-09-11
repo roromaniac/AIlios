@@ -563,14 +563,19 @@ async def update_knowledge_files(discord_message):
     """
     await discord_message.channel.send(KNOWLEDGE_UPDATED_NEEDED_MESSAGE)
     try:
-        # # Run gpt-crawler on kh2rando.com
-        # try:
-        #     subprocess.run(["npm", "run", "start"], cwd="./gpt-crawler", check=True)
-        #     print("GPT Crawler completed successfully.")
-        # except subprocess.CalledProcessError as e:
-        #     print(f"Error running GPT Crawler: {e}")
-        #     await discord_message.channel.send("There was an error updating the knowledge base. <@611722032198975511> has been notified.")
-        #     return
+        # Run gpt-crawler on kh2rando.com
+        try:
+            
+            npm_local_path = os.path.join(os.getcwd(), "node_modules", ".bin", "npm")
+            # Call npm with the start script
+            print(npm_local_path)
+            subprocess.check_call([npm_local_path, "start"], cwd="./knowledge-files/gpt-crawler")
+            print("GPT Crawler completed successfully.")
+        except (subprocess.CalledProcessError) as e:
+        # except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            print(f"Error running GPT Crawler: {e}")
+            await discord_message.channel.send("There was an error updating the knowledge base. <@611722032198975511> has been notified.")
+            return
         subprocess.run(["python", "extract_messages.py"], check=True)
         subprocess.run(["python", "refresh_knowledge_files.py"], check=True)
         set_key('.env', 'LAST_KNOWLEDGE_FILE_UPDATE', dt.datetime.today().strftime('%m-%d-%Y'))

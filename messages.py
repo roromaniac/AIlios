@@ -6,7 +6,7 @@ import os
 from config import *
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 BOT_ERROR_MESSAGE = 'The Ailios bot could not process the response. Please try again. I have pinged <@611722032198975511> informing him of the incident.'
 CORRECTION_SUCCESS_MESSAGE = 'Thank you for your input on how to correct this response! I will try to use this information for future responses.'

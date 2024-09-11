@@ -186,9 +186,12 @@ async def on_message(discord_message):
 
         if any(role.name in CORRECTION_PERMITTED_ROLES for role in discord_message.author.roles):
 
-            update_knowledge_files(discord_message)
+            await update_knowledge_files(discord_message)
 
     elif discord_message.content.startswith(LAST_UPDATE_COMMAND):
+
+        load_dotenv(override=True)
+        LAST_UPDATE_MESSAGE = f"The last time the knowledge files were updated was: {os.environ["LAST_KNOWLEDGE_FILE_UPDATE"]}"
 
         await discord_message.channel.send(LAST_UPDATE_MESSAGE)
 
