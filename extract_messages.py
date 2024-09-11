@@ -7,7 +7,6 @@ import json
 import os
 import re
 import subprocess
-import discord
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
 from dateutil.relativedelta import relativedelta

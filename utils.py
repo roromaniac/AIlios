@@ -7,6 +7,7 @@ import json
 import logging
 import io
 import re
+import subprocess
 
 import datetime as dt
 import tempfile
@@ -14,7 +15,7 @@ import requests
 import aiohttp
 from PIL import Image
 from deep_translator import GoogleTranslator
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key
 from langdetect import detect_langs
 
 import discord
@@ -235,7 +236,7 @@ def knowledge_file_needs_update():
     Returns:
         bool: True if the knowledge file needs to be updated, False otherwise.
     """
-    load_dotenv()  # Ensure environment variables are loaded
+    
     last_update = os.getenv('LAST_KNOWLEDGE_FILE_UPDATE')
     if not last_update:
         return True  # If no last update date is set, assume update is needed
@@ -552,6 +553,33 @@ def translate_error_message(language):
         logging.exception("ERROR OCCURRED")
 
     return translated_error_message
+
+async def update_knowledge_files(discord_message):
+    """
+        Updates the relevant knowledge files and adds them to vector storage on OpenAI.
+
+        Args:
+            discord_message (discord.Message): the discord message where the update request was submitted
+    """
+    await discord_message.channel.send(KNOWLEDGE_UPDATED_NEEDED_MESSAGE)
+    try:
+        # # Run gpt-crawler on kh2rando.com
+        # try:
+        #     subprocess.run(["npm", "run", "start"], cwd="./gpt-crawler", check=True)
+        #     print("GPT Crawler completed successfully.")
+        # except subprocess.CalledProcessError as e:
+        #     print(f"Error running GPT Crawler: {e}")
+        #     await discord_message.channel.send("There was an error updating the knowledge base. <@611722032198975511> has been notified.")
+        #     return
+        subprocess.run(["python", "extract_messages.py"], check=True)
+        subprocess.run(["python", "refresh_knowledge_files.py"], check=True)
+        set_key('.env', 'LAST_KNOWLEDGE_FILE_UPDATE', dt.datetime.today().strftime('%m-%d-%Y'))
+        load_dotenv(override=True)
+        await discord_message.channel.send(KNOWLEDGE_UPDATE_SUCCESS_MESSAGE)
+    except subprocess.CalledProcessError as e:
+        print(f"Error refreshing knowledge files: {e}")
+        await discord_message.channel.send(KNOWLEDGE_UPDATE_FAILED_MESSAGE)
+
 
 async def upload_image_to_openai(openai_client, image_data, filename):
     """

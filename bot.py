@@ -49,28 +49,14 @@ async def on_message(discord_message):
     """
     await asyncio.sleep(.1)
 
+    load_dotenv()
+
     conversations_logs = setup_conversation_logs()
 
     if discord_message.content.startswith(HELP_COMMAND):
 
         if knowledge_file_needs_update():
-            await discord_message.channel.send(KNOWLEDGE_UPDATED_NEEDED_MESSAGE)
-            try:
-                # # Run gpt-crawler on kh2rando.com
-                # try:
-                #     subprocess.run(["npm", "run", "start"], cwd="./gpt-crawler", check=True)
-                #     print("GPT Crawler completed successfully.")
-                # except subprocess.CalledProcessError as e:
-                #     print(f"Error running GPT Crawler: {e}")
-                #     await discord_message.channel.send("There was an error updating the knowledge base. <@611722032198975511> has been notified.")
-                #     return
-                subprocess.run(["python", "extract_messages.py"], check=True)
-                subprocess.run(["python", "refresh_knowledge_files.py"], check=True)
-                set_key('.env', 'LAST_KNOWLEDGE_FILE_UPDATE', dt.datetime.today().strftime('%m-%d-%Y'))
-            except subprocess.CalledProcessError as e:
-                print(f"Error refreshing knowledge files: {e}")
-                await discord_message.channel.send(KNOWLEDGE_UPDATE_FAILED_MESSAGE)
-
+            update_knowledge_files(discord_message)
             return
 
         discord_thread = None
@@ -178,14 +164,33 @@ async def on_message(discord_message):
 
         openai_client = OpenAI()
         discord_thread, existing_thread = await get_discord_thread(openai_client, discord_message, discord_thread_name=THREAD_TITLE_ERROR_MESSAGE)
-        # store the review or send an error message that review can't be done
-        try:
-            conversations_logs = await submit_correction(discord_thread, discord_message, conversations_logs)
+        
+        if existing_thread and (
+            discord_message.author.name == conversations_logs[discord_thread.id]["message_author"] or
+            any(role.name in CORRECTION_PERMITTED_ROLES for role in discord_message.author.roles)
+        ):
+            # store the review or send an error message that review can't be done
+            try:
+                conversations_logs = await submit_correction(discord_thread, discord_message, conversations_logs)
 
-        except Exception:
-            # communicate to user that there is a fatal error
-            await discord_thread.send(BOT_ERROR_MESSAGE)
-            logging.exception("ERROR OCCURRED")
+            except Exception:
+                # communicate to user that there is a fatal error
+                await discord_thread.send(BOT_ERROR_MESSAGE)
+                logging.exception("ERROR OCCURRED")
+
+        else:
+            await discord_thread.send(PERMISSION_DENIED_MESSAGE)
+
+    
+    elif discord_message.content.startswith(TRIGGER_UPDATE_COMMAND):
+
+        if any(role.name in CORRECTION_PERMITTED_ROLES for role in discord_message.author.roles):
+
+            update_knowledge_files(discord_message)
+
+    elif discord_message.content.startswith(LAST_UPDATE_COMMAND):
+
+        await discord_message.channel.send(LAST_UPDATE_MESSAGE)
 
     # save the conversation logs
     with open(CONVERSATION_FILE, 'w', encoding='utf-8') as logs:
