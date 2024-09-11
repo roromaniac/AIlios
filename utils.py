@@ -564,12 +564,10 @@ async def update_knowledge_files(discord_message):
     await discord_message.channel.send(KNOWLEDGE_UPDATED_NEEDED_MESSAGE)
     try:
         # Run gpt-crawler on kh2rando.com
-        try:
-            
-            npm_local_path = os.path.join(os.getcwd(), "node_modules", ".bin", "npm")
+        try: 
+            npm_local_path = os.path.join(os.getcwd(), "knowledge-files", "gpt-crawler", "node_modules", ".bin", "npm")
             # Call npm with the start script
-            print(npm_local_path)
-            subprocess.check_call([npm_local_path, "start"], cwd="./knowledge-files/gpt-crawler")
+            subprocess.run([npm_local_path, "run", "start"], cwd="./knowledge-files/gpt-crawler", check=True)
             print("GPT Crawler completed successfully.")
         except (subprocess.CalledProcessError) as e:
         # except (subprocess.CalledProcessError, FileNotFoundError) as e:
