@@ -70,5 +70,9 @@
     "o1-mini-2024-09-12": {
         "input": 0.003,
         "output": 0.012
+    },
+    "chatgpt-4o-latest": {
+        "input": 0.005,
+        "output": 0.015 
     }
 }
