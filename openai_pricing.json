@@ -54,5 +54,21 @@
     "gpt-4o-mini": {
         "input": 0.00015,
         "output": 0.0006
+    },
+    "o1-preview": {
+        "input": 0.015,
+        "output": 0.06
+    },
+    "o1-preview-2024-09-12": {
+        "input": 0.015,
+        "output": 0.06
+    },
+    "o1-mini": {
+        "input": 0.003,
+        "output": 0.012
+    },
+    "o1-mini-2024-09-12": {
+        "input": 0.003,
+        "output": 0.012
     }
 }
