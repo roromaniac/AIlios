@@ -7,3 +7,5 @@ requests
 pillow
 datetime
 python-dateutil
+playwright
+asyncio

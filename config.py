@@ -22,6 +22,8 @@ DYNAMIC_CHANNEL_IDS = {
 }
 HELP_COMMAND = "/randohelp"
 IMAGE_COST_IN_DOLLARS = 0.001275
+KH2RANDO_WEBSITE_URL = "https://tommadness.github.io/KH2Randomizer/"
+KH2RANDO_WEBSITE_KNOWLEDGE_FILENAME = "kh2fmrando-website.json"
 LOGGING_FILE = "app.log"
 LANG_DETECT_MIN_PROB = 0.6
 LAST_UPDATE_COMMAND = "/lastupdate"

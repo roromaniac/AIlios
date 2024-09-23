@@ -565,21 +565,18 @@ async def update_knowledge_files(discord_message):
     await discord_message.channel.send(KNOWLEDGE_UPDATED_NEEDED_MESSAGE)
     try:
         # delete the old kh2fmrando.json file since the gpt-crawler doesn't delete it
-        folder_path = os.path.join("knowledge-files", "dynamic-files", "kh2rando-website")
-        if os.path.exists(folder_path):
-            for file_name in os.listdir(folder_path):
-                file_path = os.path.join(folder_path, file_name)
+        kh2rando_website_folder_path = os.path.join("knowledge-files", "dynamic-files", "kh2rando-website")
+        if os.path.exists(kh2rando_website_folder_path):
+            for file_name in os.listdir(kh2rando_website_folder_path):
+                file_path = os.path.join(kh2rando_website_folder_path, file_name)
                 if os.path.isfile(file_path):
                     os.remove(file_path)
-                    print(f"{file_name} has been removed.")
         else:
             print("The folder does not exist.")
         # Run gpt-crawler on kh2rando.com
         try:
-            npm_command = "npm.cmd" if platform.system() == "Windows" else "npm"
-            npm_local_path = os.path.join(os.getcwd(), "knowledge-files", "gpt-crawler", "node_modules", ".bin", npm_command)
-            # Call npm with the start script
-            subprocess.run([npm_local_path, "run", "start"], cwd="./knowledge-files/gpt-crawler", check=True)
+            gpt_crawler_script = os.path.join(".", "knowledge-files", "gpt-crawler", "crawler", "main.py")
+            subprocess.run(["ailios\Scripts\python.exe", gpt_crawler_script], check=True)
             print("GPT Crawler completed successfully.")
         except (subprocess.CalledProcessError) as e:
         # except (subprocess.CalledProcessError, FileNotFoundError) as e:

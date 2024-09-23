@@ -42,5 +42,5 @@ All relevant media (such as images, videos, attachments, etc.) will be stored in
 
 ### kh2rando-website
 
-This is the directory in which all scraped kh2random.com information should be stored. gpt-crawler contains all the code for the website scraping. Run the gpt crawler by navigating to the gpt-crawler directory and then following the instructions [here](https://github.com/BuilderIO/gpt-crawler). 
+This is the directory in which all scraped kh2random.com information should be stored. gpt-crawler contains all the code for the website scraping. Run the gpt crawler by navigating to the gpt-crawler directory and then following the instructions [here](https://github.com/A-baoYang/gpt-crawler-py). 
 

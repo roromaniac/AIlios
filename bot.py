@@ -56,7 +56,7 @@ async def on_message(discord_message):
     if discord_message.content.startswith(HELP_COMMAND):
 
         if knowledge_file_needs_update():
-            update_knowledge_files(discord_message)
+            await update_knowledge_files(discord_message)
             return
 
         discord_thread = None
