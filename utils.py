@@ -2,6 +2,7 @@
 
 # pylint: disable=wildcard-import, unused-wildcard-import, broad-exception-caught
 
+import sys
 import os
 import json
 import logging
@@ -565,7 +566,7 @@ async def update_knowledge_files(discord_message):
     await discord_message.channel.send(KNOWLEDGE_UPDATED_NEEDED_MESSAGE)
     try:
         # delete the old kh2fmrando.json file since the gpt-crawler doesn't delete it
-        kh2rando_website_folder_path = os.path.join("knowledge-files", "dynamic-files", "kh2rando-website")
+        kh2rando_website_folder_path = os.path.join(".", "knowledge-files", "dynamic-files", "kh2rando-website")
         if os.path.exists(kh2rando_website_folder_path):
             for file_name in os.listdir(kh2rando_website_folder_path):
                 file_path = os.path.join(kh2rando_website_folder_path, file_name)
@@ -576,7 +577,7 @@ async def update_knowledge_files(discord_message):
         # Run gpt-crawler on kh2rando.com
         try:
             gpt_crawler_script = os.path.join(".", "knowledge-files", "gpt-crawler", "crawler", "main.py")
-            subprocess.run(["ailios\Scripts\python.exe", gpt_crawler_script], check=True)
+            subprocess.run(["python", gpt_crawler_script], check=True)
             print("GPT Crawler completed successfully.")
         except (subprocess.CalledProcessError) as e:
         # except (subprocess.CalledProcessError, FileNotFoundError) as e:

@@ -7,5 +7,6 @@ requests
 pillow
 datetime
 python-dateutil
-playwright
 asyncio
+requests
+beautifulsoup4
