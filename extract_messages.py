@@ -83,7 +83,7 @@ def delete_excess_media(media_dir):
 
 command_list = []
 for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
-
+    print(channel_name, channel_info)
     channel_id, batch_channel_by_date = channel_info["id"], channel_info["batch_by_date"]
     current_knowledge_filepath = os.path.join(DYNAMIC_FILES_DIR, channel_name)
     if batch_channel_by_date:
@@ -106,8 +106,8 @@ for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
             # "--media", "--reuse-media", "--media-dir", media_dir
         ])
 
-# with ThreadPoolExecutor(max_workers=12) as executor:
-#     executor.map(run_command, command_list)
+with ThreadPoolExecutor(max_workers=12) as executor:
+    executor.map(run_command, command_list)
 
 
 for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
