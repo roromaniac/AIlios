@@ -363,12 +363,13 @@ async def process_discord_message_attachments(discord_message, discord_thread):
                                     await send_response_to_discord(discord_thread, IMAGE_TOO_LARGE_MESSAGE % file.filename)
         return attached_images
 
-async def send_initial_discord_response(discord_thread, discord_message, text_language='en'):
+async def send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language='en'):
     """
         Sends initial discord message upon new inquiry from user. 
 
         Args:
             discord_thread (discord.Thread | None): The discord thread where the new inquiry message is located.
+            existing_thread (bool): Indication if message is part of existing thread.
             discord_message (discord.Message): The discord message associated with the new inquiry. 
             text_language (str): The language code to translate the initial message to.
 
@@ -378,7 +379,7 @@ async def send_initial_discord_response(discord_thread, discord_message, text_la
         Returns:
             header (str): The initial message sent to discord to use for logging purposes.
     """
-    existing_thread = is_discord_thread(discord_message, discord_thread)
+
     if existing_thread:
         header = EXISTING_THREAD_HEADER
         header = GoogleTranslator(source='auto', target=text_language).translate(header)
