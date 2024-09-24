@@ -33,7 +33,7 @@ def run_command(command):
         Args:
             command: The terminal command to be run.
     """
-    subprocess.run(command, shell=True, cwd=os.path.join(BASE_DIR, "DiscordChatExporter.Cli"), check=True)
+    subprocess.run(command, cwd=os.path.join(BASE_DIR, "DiscordChatExporter.Cli"), check=True)
 
 def strip_discord_messages(knowledge_filepath, dated_filename):
     """
