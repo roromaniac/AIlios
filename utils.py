@@ -25,7 +25,7 @@ import discord
 from config import *
 from messages import *
 
-load_dotenv()
+load_dotenv(override=True)
 
 def check_rate_limit(endpoint):
     """

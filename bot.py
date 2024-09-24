@@ -19,7 +19,7 @@ from config import *
 from messages import *
 from utils import *
 
-load_dotenv()
+load_dotenv(override=True)
 
 intents = discord.Intents.all()
 discord_client = discord.Client(intents=intents)
@@ -49,7 +49,7 @@ async def on_message(discord_message):
     """
     await asyncio.sleep(.1)
 
-    load_dotenv()
+    load_dotenv(override=True)
 
     conversations_logs = setup_conversation_logs()
 

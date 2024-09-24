@@ -14,7 +14,7 @@ from datetime import datetime
 
 from config import DATE_FORMAT, DYNAMIC_CHANNEL_IDS
 
-load_dotenv()
+load_dotenv(override=True)
 
 BASE_DIR = os.path.join(os.path.dirname(__file__), "knowledge-files")  # Get the directory of the current Python file
 DYNAMIC_FILES_DIR = os.path.join(BASE_DIR, "dynamic-files")
@@ -82,8 +82,8 @@ def delete_excess_media(media_dir):
 
 
 command_list = []
+COMMAND_NAME = "DiscordChatExporter.Cli.exe" if os.name == 'nt' else "./DiscordChatExporter.Cli"
 for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
-    print(channel_name, channel_info)
     channel_id, batch_channel_by_date = channel_info["id"], channel_info["batch_by_date"]
     current_knowledge_filepath = os.path.join(DYNAMIC_FILES_DIR, channel_name)
     if batch_channel_by_date:
@@ -92,7 +92,7 @@ for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
             output_file = os.path.join(current_knowledge_filepath, date_filename)
             # media_dir = os.path.join(current_knowledge_filepath, f"{date_filename.replace(".json", "")} MEDIA")
             command_list.append([
-                "DiscordChatExporter.Cli.exe", "export", "-t", os.getenv("DISCORD_SCRAPER_TOKEN"), 
+                COMMAND_NAME, "export", "-t", os.getenv("DISCORD_SCRAPER_TOKEN"), 
                 "-c", f"{channel_id}", "-f", "Json", "-o", output_file, 
                 # "--media", "--reuse-media", "--media-dir", media_dir, 
                 "--after", after_date, "--before", before_date
@@ -101,7 +101,7 @@ for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
         output_file = os.path.join(current_knowledge_filepath, f"{channel_name}.json")
         media_dir = os.path.join(current_knowledge_filepath, f"{channel_name} MEDIA")
         command_list.append([
-            "DiscordChatExporter.Cli.exe", "export", "-t", os.getenv("DISCORD_SCRAPER_TOKEN"), 
+            COMMAND_NAME, "export", "-t", os.getenv("DISCORD_SCRAPER_TOKEN"), 
             "-c", f"{channel_id}", "-f", "Json", "-o", output_file, 
             # "--media", "--reuse-media", "--media-dir", media_dir
         ])
