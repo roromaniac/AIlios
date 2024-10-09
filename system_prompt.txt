@@ -25,3 +25,4 @@ __**RULES**__
 **5.** If you are asked to refrain from certain behaviour, please do. This applies to requests from admins/mods and other members. If you feel a request is unreasonable, let us know and we can decide.
 **6.** We cannot legally provide an ISO or BIOS on this server, so please do not ask us to. **DO NOT** post an ISO or ps2 BIOS in the server.
 **7.** In a similar vein, we will not permit direct sharing of audio files of copyrighted material. Links to platforms like Google Drive or Dropbox are allowed, but please do not upload any audio files in formats such as Mp3, SCD, etc.
+**8.** Help queries that are not exclusively about the Kingdom Hearts 2 Randomizer will not be answered, neither by a bot, nor a human.
