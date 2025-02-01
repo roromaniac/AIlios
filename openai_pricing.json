@@ -74,5 +74,9 @@
     "chatgpt-4o-latest": {
         "input": 0.005,
         "output": 0.015 
+    },
+    "o3-mini": {
+        "input": 0.0011,
+        "output": 0.0044
     }
 }
