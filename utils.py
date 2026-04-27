@@ -2,6 +2,7 @@
 
 # pylint: disable=wildcard-import, unused-wildcard-import, broad-exception-caught
 
+import asyncio
 import sys
 import os
 import json
@@ -305,7 +306,7 @@ def message_has_thread(discord_message):
             return True
     return False
 
-async def populate_OPENAI_ASSISTANT_ID_content(openai_client, discord_message, discord_thread, discord_message_contents):
+async def populate_multimodal_data_for_openai(openai_client, discord_message, discord_thread, discord_message_contents):
     """
         Creates jsons of text and image data to send to OpenAI assistant.
 
@@ -362,6 +363,25 @@ async def process_discord_message_attachments(discord_message, discord_thread):
                                 else:
                                     await send_response_to_discord(discord_thread, IMAGE_TOO_LARGE_MESSAGE % file.filename)
         return attached_images
+
+async def run_asyncio_task(script_path: str):
+    process = await asyncio.create_subprocess_exec(
+        sys.executable, script_path,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+
+    stdout, stderr = await process.communicate()
+
+    if process.returncode != 0:
+        raise RuntimeError(
+            f"Script failed: {script_path}\n"
+            f"stdout:\n{stdout.decode()}\n"
+            f"stderr:\n{stderr.decode()}"
+        )
+
+    return stdout.decode(), stderr.decode()
+
 
 async def send_initial_discord_response(discord_thread, existing_thread, discord_message, text_language='en'):
     """
@@ -564,8 +584,10 @@ async def update_knowledge_files(discord_message):
         Args:
             discord_message (discord.Message): the discord message where the update request was submitted
     """
+    
     await discord_message.channel.send(KNOWLEDGE_UPDATED_NEEDED_MESSAGE)
     try:
+        
         # delete the old kh2fmrando.json file since the gpt-crawler doesn't delete it
         kh2rando_website_folder_path = os.path.join(".", "knowledge-files", "dynamic-files", "kh2rando-website")
         if os.path.exists(kh2rando_website_folder_path):
@@ -575,22 +597,29 @@ async def update_knowledge_files(discord_message):
                     os.remove(file_path)
         else:
             print("The folder does not exist.")
+
         # Run gpt-crawler on kh2rando.com
         try:
             gpt_crawler_script = os.path.join(".", "knowledge-files", "gpt-crawler", "crawler", "main.py")
-            subprocess.run(["python", gpt_crawler_script], check=True)
-            print("GPT Crawler completed successfully.")
-        except (subprocess.CalledProcessError) as e:
-        # except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            stdout, stderr = await run_asyncio_task(gpt_crawler_script)
+            print(f"GPT Crawler completed successfully.\nstdout: {stdout}\nstderr: {stderr}")
+        except RuntimeError as e:
             print(f"Error running GPT Crawler: {e}")
             await discord_message.channel.send("There was an error updating the knowledge base. <@611722032198975511> has been notified.")
             return
-        subprocess.run(["python", "extract_messages.py"], check=True)
-        subprocess.run(["python", "refresh_knowledge_files.py"], check=True)
+        
+        stdout, stderr = await run_asyncio_task("extract_messages.py")
+        print(f"Extract Messages completed successfully.\nstdout: {stdout}\nstderr: {stderr}")
+
+        stdout, stderr = await run_asyncio_task("refresh_knowledge_files.py")
+        print(f"Refresh Knowledge Files completed successfully.\nstdout: {stdout}\nstderr: {stderr}")
+
+        # update the latest date of knowledge file update
         set_key('.env', 'LAST_KNOWLEDGE_FILE_UPDATE', dt.datetime.today().strftime('%m-%d-%Y'))
         load_dotenv(override=True)
+
         await discord_message.channel.send(KNOWLEDGE_UPDATE_SUCCESS_MESSAGE)
-    except subprocess.CalledProcessError as e:
+    except RuntimeError as e:
         print(f"Error refreshing knowledge files: {e}")
         await discord_message.channel.send(KNOWLEDGE_UPDATE_FAILED_MESSAGE)
 

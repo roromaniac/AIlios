@@ -92,9 +92,9 @@ for channel_name, channel_info in DYNAMIC_CHANNEL_IDS.items():
             output_file = os.path.join(current_knowledge_filepath, date_filename)
             # media_dir = os.path.join(current_knowledge_filepath, f"{date_filename.replace(".json", "")} MEDIA")
             command_list.append([
-                COMMAND_NAME, "export", "-t", os.getenv("DISCORD_SCRAPER_TOKEN"), 
+                COMMAND_NAME, "export", "-t", os.getenv("DISCORD_SCRAPER_TOKEN"),
                 "-c", f"{channel_id}", "-f", "Json", "-o", output_file, 
-                # "--media", "--reuse-media", "--media-dir", media_dir, 
+                # "--media", "--reuse-media", "--media-dir", media_dir,
                 "--after", after_date, "--before", before_date
             ])
     else:
